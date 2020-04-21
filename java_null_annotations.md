@@ -1,6 +1,11 @@
 # Eliminare l'errore Null pointer exception
 
-Se NullPointerException non è l'errore più frequente, è sicuramente uno dei più diffusi, ma è possibile evitarlo. Inizialmente si potrebbe pensare che "basta controllare che un riferimento sia non null prima di usarlo", e in effetti per molti anni si è seguita questa strada, con i risultati sotto gli occhi di tutti. Il vero problema è sapere quando davvero questi controlli vanno fatti: aggiungerli sempre, nel dubbio, non è una soluzione buona, non solo perchè il codice sarebbe pieno di controlli inutili, ma soprattutto perchè, bisognerebbe decidere cosa fare per ogni singolo controllo che fallisce. Facciamo un esempio:
+It seems that the concept of null references exists thanks to Tony Hoare.
+The concept of null was introduced in the Algol language, and later Sir Hoare called it “my billion-dollar mistake”.
+
+Ci sono vari pattern per evitre l'uso di null, non oggetto di questo articolo. Nonostante questi pattern, esistono casi in cui è comodo e corretto usare i riferimenti null.
+Ma se NullPointerException non è l'errore più frequente, è sicuramente uno dei più diffusi. La buona notizia è che è possibile evitarlo, definitivamente e con certezza matematica, con l'ausilio dell'analisi statica del codice.
+Inizialmente si potrebbe pensare che "basta controllare che un riferimento sia non null prima di usarlo", e in effetti per molti anni si è seguita questa strada, con i risultati sotto gli occhi di tutti. Il vero problema è sapere quando davvero questi controlli vanno fatti: aggiungerli sempre, nel dubbio, non è una soluzione buona, non solo perchè il codice sarebbe pieno di controlli inutili, ma soprattutto perchè, bisognerebbe decidere cosa fare per ogni singolo controllo che fallisce. Facciamo un esempio:
 <pre><code>
 for (String s : getSomeStrings()) {
     useSomeString(s);
@@ -65,18 +70,13 @@ Alcuni aticoli a riguardo:
 
 #### https://blog.jooq.org/2016/11/24/the-java-ecosystems-obsession-with-nonnull-annotations/
 
-Questo articolo sostiene che l'uso delle annotazioni è inutile e pensante, ma le argomentazioni sono inconsistenti perchè non è assolutamente vero che bisogna riempire il codice di annotazioni: non tiene conto del fatto che è possibile aggiungere un'annotazione che rende tutte le variabili non null per default, semplificando notevolmente la sintassi. Anche tutte le altre critiche possono essere smontate, non hanno nulla di oggettivo:
+Questo articolo sostiene che l'uso delle annotazioni è inutile e pensante, ma le argomentazioni secondo me dovute alla mancata conoscenza ed esperienza dell'argomento. Non è assolutamente vero che bisogna riempire il codice di annotazioni: non tiene conto del fatto che è possibile aggiungere un'annotazione che rende tutte le variabili non null per default, semplificando notevolmente la sintassi. Inoltre non tiene conto del fatto chè è possibile usarle solo quando si ritiene necessario. Perchè privarsi quindi di uno strumento opzionale? In attesa di una vera valutazione quantitativa dei costi/benefici, molto difficile da fare, secondo me bisogna per lo meno lasciare la libertà di scelta caso per caso. 
 
-1) <cite>Don’t use this atomic bomb for boring null checks</cite>: potrei dire esattamente il contrario: la bomba atomica sono i tantissimi null check; e anche aggiungendo tanti controlli espliciti nel codice, difficilmente si raggiunge la certezza di evitare completamente gli errori.
-
-2) <cite>your types will take 50 lines of code to declare and reference anyway</cite>
-
-3) Anche se bisognasse annotare ogni singola dichiarazione, dire che non ne varrebbe la pena è una considerazione soggettiva non surrogata da fatti.  
-Come analogia penso al fatto che in quasi tutti i linguaggi bisogna dichiarare esplicitamente il tipo delle variabili, tutte le variabili. In linguaggi come visual basic 6.0, invece, non era necessario. Con analogia con il nostro caso, qualcuno avrà sicuramente pensato che dichiarare ogni tipo era come usare la bomba atomica per nulla. La storia dei linguaggi di progammazione ci insegna che chi pensava così, aveva torto; anche ogni buon programma visual basic cominciava con la riga:
+Facciamo un'analogia, si pensi al fatto che in quasi tutti i linguaggi bisogna dichiarare esplicitamente il tipo delle variabili, tutte le variabili. In linguaggi come visual basic 6.0, invece, non era necessario. Con analogia con il nostro caso, qualcuno avrà sicuramente pensato che dichiarare il tipo per ogni variabile era come usare la bomba atomica per nulla. La storia dei linguaggi di progammazione ci insegna che chi pensava così, aveva torto; anche ogni buon programma visual basic cominciava con la riga:
 <code>Option Explicit On</code> che forzava la necessità di dichiarare il tipo, per rendere più robusto il programma ed evitare inevitabili errori che, con ingenuità, si potrebbe pensare che sarebbero stati facili da evitare.  
 Con le null annotation la storia si ripete, solo che ora tutto è più semplice perchè non bisogna aggiungere una parola chiave ad ogni variabile, visto che si può assumere che la maggior parte siano non nulle, basta annotare con un semplice @Nullable quelle che potranno essere nulle, che statisticamente sono una piccola minoranza.
 
 - https://stackoverflow.com/questions/4963300/which-notnull-java-annotation-should-i-use
 - 2012-11-20 https://stackoverflow.com/questions/13484202/how-to-use-nullable-and-nonnull-annotations-more-effectively
 - https://www.baeldung.com/spring-null-safety-annotations
-
+- https://blog.jetbrains.com/dotnet/2018/08/13/null-pointers-opportunity-not-exception-code-smells-series/

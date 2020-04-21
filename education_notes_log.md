@@ -45,10 +45,13 @@ https://stackoverflow.com/questions/48349393/can-i-make-intellij-nonnull-nullabl
 ## 4/4/2020
 ### main IDE feature compared:
 
+aa  bbbbb   ccc
+11  d
+
 | Eclipse                  | IntelliJ
 | -------------------------|---------
 |+ Open and Free           |- Gratis
-|- buggy and slow          |+ fast and smart (but non so much, not always)
+|- buggy and slow        |+ fast and smart (but non so much, not always)
 |+ lot of plugin and tools |+ essential and well integrated, plugin
 |+ Enterprise Development  |- Enterprise Developement Requires Ultimate Editon
 |+ Javascript native?      |- Javascript requires WebStorms?
@@ -56,15 +59,35 @@ https://stackoverflow.com/questions/48349393/can-i-make-intellij-nonnull-nullabl
 
 Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più completa, e per l'analisi migliore dei null pointer sui generici: mi permette di scrivere codice 100% esente dai null pointer. Almeno finchè non mi risolvono l'issue 236740
 
+## 2020-04-16
+
+- [Corso Ongaro lezione 1][ongaro]
+- [Corso full-stack Udemy][studyeasy]
+
+[ongaro]: https://www.ongaro-corsi.com/3pes9j1b
+[studyeasy]: [https://www.udemy.com/course/full-stack-java-developer-java/learn/lecture/12951764#overview]
+
+## 2020-04-17
+
+- [Corso full-stack Udemy][studyeasy]
+
+## 2020-04-18
+
+- [Corso Ongaro lezione 2][ongaro]
+- [Corso full-stack Udemy][studyeasy]
+
 ## TODO: Altre cose da vedere
 
 - [C and C++ software development toolkit for SOAP/XML](https://en.wikipedia.org/wiki/GSOAP)
-- [free installer for Windows programs](https://jrsoftware.org/isinfo.php)
+- [Free installer for Windows programs](https://jrsoftware.org/isinfo.php)
+
 My Gity-Wiki
 
 war ear aar
 
 https://stackshare.io/
 pubblicare quando avrò progetto gradle:
-https://community.ptc.com/t5/Windchill/Windchill-tips-building-your-project-with-Maven/td-p/292254
-https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
+- https://community.ptc.com/t5/Windchill/Windchill-tips-building-your-project-with-Maven/td-p/292254
+ - https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
+- http://www.gwtproject.org/
+- https://www.sonarqube.org/downloads/

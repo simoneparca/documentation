@@ -1,3 +1,4 @@
+Work in progress
 
 (https://www.camardella.net/database/normalizzazione-di-un-database) sembra buono, da vedere.
 https://www.yourinspirationweb.com/2010/10/14/la-strutturazione-dei-database-13-la-chiave-primaria/
@@ -84,21 +85,17 @@ ogni attributo non-primo (ovvero non appartenente a nessuna chiave) dipende comp
 Introducendo la 2NF si possono evitare le anomalie viste.
 
 ## Forma Normale di Boyce e Codd (BCNF)
- Ma per evitare anche altre anomalie è meglio ricorrere alla:
-Forma Normale di Boyce-Codd (BCNF)
-Uno schema R(X) è in forma normale di Boyce e Codd se e solo se,
-per ogni dipendenza funzionale (non banale) Y → Z definita su di esso,
-Y è una superchiave di R(X)
- Si noti che, come al solito, i vincoli si riferiscono allo schema,
-in quanto dipendeno dalla semantica degli attributi
- Un’istanza può pertanto soddisfare “per caso” il vincolo,
-ma ciò non garantisce che lo schema sia normalizzato
- In altri termini, le FD non si “ricavano” dall’analisi dei dati, ma ragionando
-sugli attributi dello schema
+Per evitare anche altre anomalie è meglio ricorrere alla Forma Normale di Boyce-Codd (BCNF):
 
-Normalizzazione in BCNF
- Se uno schema non è in BCNF, la soluzione è “decomporlo”,
-sulla base delle FD
+Uno schema R(X) è in forma normale di Boyce e Codd se e solo se, per ogni dipendenza funzionale (non banale) Y → Z definita su di esso,
+Y è una superchiave di R(X)
+
+Si noti che, come al solito, i vincoli si riferiscono allo schema, in quanto dipendono dalla semantica degli attributi.
+Un’istanza può pertanto soddisfare “per caso” il vincolo, ma ciò non garantisce che lo schema sia normalizzato
+In altri termini, le FD non si “ricavano” dall’analisi dei dati, ma ragionando sugli attributi dello schema
+
+### Normalizzazione in BCNF
+Se uno schema non è in BCNF, la soluzione è “decomporlo”, sulla base delle FD
 Impiegato → Stipendio Impiegato, Progetto → Funzione Progetto → Bilancio
 
 Impiegato Stipendio
@@ -127,72 +124,76 @@ Venere   15
 
 Attenzione!
 Impiegato Progetto Sede
-Rossi Marte Roma
-Verdi Giove Milano
-Verdi Venere Milano
-Neri Saturno Milano
-Neri Venere Milano Impiegato → Sede Progetto → Sede
- La soluzione non è sempre così semplice, bisogna fare anche altre
+Rossi     Marte    Roma
+Verdi     Giove    Milano
+Verdi     Venere   Milano
+Neri      Saturno  Milano
+Neri      Venere   Milano
+
+Impiegato → Sede Progetto → Sede
+
+La soluzione non è sempre così semplice, bisogna fare anche altre
 considerazioni; ad esempio, operando come prima:
 …se proviamo a tornare indietro
 (Join su Sede):
 Impiegato Sede
-Rossi Roma
-Verdi Milano
-Neri Milano
-Progetto Sede
-Marte Roma
-Giove Milano
-Saturno Milano
-Venere Milano
-Impiegato Progetto Sede
-Rossi Marte Roma
-Verdi Giove Milano
-Verdi Venere Milano
-Neri Saturno Milano
-Neri Venere Milano
-Verdi Saturno Milano
-Neri Giove Milano
+Rossi     Roma
+Verdi     Milano
+Neri      Milano
 
-Decomposizione Senza Perdita
- La decomposizione non deve assolutamente alterare il contenuto
-informativo del DB
- Si introduce pertanto il seguente requisito
-Decomposizione senza perdita (lossless)
+Progetto Sede
+Marte    Roma
+Giove    Milano
+Saturno  Milano
+Venere   Milano
+
+Impiegato Progetto Sede
+Rossi     Marte    Roma
+Verdi     Giove    Milano
+Verdi     Venere   Milano
+Neri      Saturno  Milano
+Neri      Venere   Milano
+Verdi     Saturno  Milano
+Neri      Giove    Milano
+
+Decomposizione Senza Perdita: La decomposizione non deve assolutamente alterare il contenuto informativo del DB
+Si introduce pertanto il seguente requisito
+
+## Decomposizione senza perdita (lossless)
 Uno schema R(X) si decompone senza perdita negli schemi R1(X1) e
 R2(X2) se, per ogni istanza legale r su R(X), il join naturale delle
-proiezioni di r su X1 e X2 è uguale a r stessa:
-πX1(r) ZYπX2(r) = r
- Una decomposizione con perdita può generare tuple spurie
- Per decomporre senza perdita è necessario e sufficiente che il join
+proiezioni di r su X1 e X2 è uguale a r stessa:  
+πX1(r) ZYπX2(r) = r  
+- Una decomposizione con perdita può generare tuple spurie
+- Per decomporre senza perdita è necessario e sufficiente che il join
 naturale sia eseguito su una superchiave di uno dei due sottoschemi,
 ovvero che valga X1 ∩ X2 → X1 oppure X1 ∩ X2 → X2
 
 Esempio di decomposizione lossless
 Impiegato Progetto
-Rossi Marte
-Verdi Giove
-Verdi Venere
-Neri Saturno
-Neri Venere
+Rossi     Marte
+Verdi     Giove
+Verdi     Venere
+Neri      Saturno
+Neri      Venere
+
 Impiegato Progetto Sede
-Rossi Marte Roma
-Verdi Giove Milano
-Verdi Venere Milano
-Neri Saturno Milano
-Neri Venere Milano
+Rossi     Marte    Roma
+Verdi     Giove    Milano
+Verdi     Venere   Milano
+Neri      Saturno  Milano
+Neri      Venere   Milano
+
 Impiegato Sede
-Rossi Roma
-Verdi Milano
-Neri Milano
+Rossi     Roma
+Verdi     Milano
+Neri      Milano
 OK!
 … ma i problemi non sono ancora finiti…
 
-Modifichiamo il DB…
- Supponiamo di voler inserire l’informazione che Neri lavora al progetto
-Marte:
- Ricostruendo la relazione otteniamo:
-che però viola la FD Progetto → Sede!
+Modifichiamo il DB, Supponiamo di voler inserire l’informazione che Neri lavora al progetto
+Marte. Ricostruendo la relazione otteniamo:
+
 Impiegato Progetto
 Rossi Marte
 Verdi Giove
@@ -200,26 +201,30 @@ Verdi Venere
 Neri Saturno
 Neri Venere
 Neri Marte
+
 Impiegato Sede
 Rossi Roma
 Verdi Milano
 Neri Milano
+
 Impiegato Progetto Sede
 Rossi Marte Roma
 Verdi Giove Milano
-Verdi Vene re Milano
-Neri Satu rno Milano
+Verdi Venere Milano
+Neri Saturno Milano
 Neri Vene re Milano
 Neri Marte Milano
 
-Preservazione delle Dipendenze
- Diciamo che una decomposizione preserva le dipendenze se ciascuna
+che però viola la FD Progetto → Sede!
+
+## Preservazione delle Dipendenze
+Diciamo che una decomposizione preserva le dipendenze se ciascuna
 delle dipendenze funzionali dello schema originario coinvolge attributi che
 compaiono tutti insieme in uno degli schemi decomposti
- Nell’esempio Progetto → Sede non è conservata
- Se una FD non si preserva diventa più complicato capire quali sono le
+Nell’esempio Progetto → Sede non è conservata
+Se una FD non si preserva diventa più complicato capire quali sono le
 modifiche del DB che non violano la FD stessa
- In generale si devono prima eseguire query SQL di verifica
+In generale si devono prima eseguire query SQL di verifica
 
 Esempio di query di verifica
  Bisogna verificare che il progetto (Marte) sia presso la stessa sede
@@ -267,9 +272,7 @@ WHERE I.Impiegato = ‘Neri’
 AND P.Progetto = `Marte’
 AND I.Sede = P.Sede
 
-Una limitazione non superabile…
- In funzione del pattern di FD, può non essere possibile decomporre in
-BCNF e preservare le FD
+Una limitazione non superabile: In funzione del pattern di FD, può non essere possibile decomporre in BCNF e preservare le FD
 
 Dirigente Progetto Sede
 Rossi Marte Roma
@@ -284,7 +287,7 @@ Dirigente → Sede
  Progetto, Sede → Dirigente coinvolge tutti gli attributi e quindi nessuna
 decomposizione può preservare tale dipendenza!
 
-La Terza Forma Normale (3NF)
+## La Terza Forma Normale (3NF)
  Una forma normale meno restrittiva della BCNF si definisce come segue:
 Terza Forma Normale (3NF)
 Uno schema R(X) è in terza forma normale se e solo se,
@@ -298,7 +301,7 @@ La definizione è anche equivalente alla seguente:
 Uno schema R(X) è in terza forma normale se e solo se ogni attributo
 non-primo non dipende transitivamente da nessuna chiave
 
-Decomposizione in 3NF
+### Decomposizione in 3NF
  L’idea alla base dell’algoritmo che produce una decomposizione in 3NF è
 creare una relazione per ogni gruppo di FD che hanno lo stesso lato
 sinistro (determinante) e inserire nello schema corrispondente gli attributi
@@ -326,7 +329,6 @@ normali coincidono
 2) Si decompone in BCNF, predisponendo opportune query di verifica
 3) Si cerca di rimodellare la situazione iniziale, al fine di permettere di
 ottenere schemi BCNF
-
 
 Decomposizione dello schema
  È innanzitutto opportuno osservare che {Progetto, Dirigente} è una chiave
@@ -395,16 +397,12 @@ In particolare, le cose da considerare sono:
 - La ridondanza presente in relazioni non normalizzate va quantificata, per capire quanto incida sull’occupazione di memoria, e sui costi da
 pagare quando le repliche di una stessa informazione devono essere aggiornate
 
+Tuttavia la diffuzione e la velocità dei database relazionali (che si basano appunto sul concetto di dati normalizzati e relazioni) ha nel tempo dimostrato che è praticamente quasi sempre meglio normalizzare, con poche eccezioni.
+
 Riassumiamo:
- Una forma normale è una proprietà di uno schema relazionale che ne
-garantisce la “qualità”, cioè l’assenza di determinati difetti
- Una relazione non normalizzata presenta ridondanze e dà luogo a
-comportamenti poco desiderabili durante gli aggiornamenti
- La definizione delle forme normali (3NF e BCNF) si basa sul vincolo di
-dipendenza funzionale (FD)
- Normalizzare uno schema significa decomporlo in sottoschemi
- Ogni decomposizione deve essere senza perdita, ovvero deve permettere
-di ricostruire esattamente la relazione originaria non decomposta
- È anche opportuno che la decomposizione preservi le FD, al fine di
-evitare (o ridurre la complessità di) query di verifica che garantiscano che
-i vincoli siano rispettati
+- Una forma normale è una proprietà di uno schema relazionale che ne garantisce la “qualità”, cioè l’assenza di determinati difetti
+- Una relazione non normalizzata presenta ridondanze e dà luogo a comportamenti poco desiderabili durante gli aggiornamenti
+- La definizione delle forme normali (3NF e BCNF) si basa sul vincolo di dipendenza funzionale (FD)
+- Normalizzare uno schema significa decomporlo in sottoschemi
+- Ogni decomposizione deve essere senza perdita, ovvero deve permettere di ricostruire esattamente la relazione originaria non decomposta
+- È anche opportuno che la decomposizione preservi le FD, al fine di evitare (o ridurre la complessità di) query di verifica che garantiscano che i vincoli siano rispettati
