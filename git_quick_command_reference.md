@@ -1,9 +1,15 @@
+git subtree push --prefix WCHLibraries/WCHLib_11.2 c:/WCHLib master
+git subtree add  --prefix WCHLibraries/WCHLib_11.2 c:/WCHLib 11.1 --squash
+git subtree push --prefix WCHLibraries/WCHLib_11.2 c:/WCHLib 11.1
+
+git rebase -i origin/11.1~4 11.1
+
 Git-SVN | Description
 ---|---
-git-svn clone -s http://example.com/my_subversion_repo local_dir|Checking out a Subversion repository -s means standard layout (trunk,tags,branches)
-git-svn show-ignore > .gitignore                                |Files you were ignoring via svn:ignore are not ignored in this git repository. To ignore them again, run in the root of your repository
-git-svn rebase                                                  |Update local repository
-git-svn dcommit                                                 |Commit on remote repository 
+git svn clone -s http://example.com/my_subversion_repo local_dir|Checking out a Subversion repository -s means standard layout (trunk,tags,branches)
+git svn show-ignore > .gitignore                                |Files you were ignoring via svn:ignore are not ignored in this git repository. To ignore them again, run in the root of your repository
+git svn rebase                                                  |Update local repository
+git svn dcommit                                                 |Commit on remote repository 
 
 Essential commands | Description
 ---|---
@@ -35,6 +41,8 @@ git checkout -b new_branch_name [old_branch_name]    |To make things easier, all
 git stash                                            |Save changes that you don’t want to commit immediately.
 git stash pop                                        |bring your saved changes back https://stackoverflow.com/questions/15286075/difference-between-git-stash-pop-and-git-stash-apply
 git merge <:branch_you_want_to_merge:>               |Merge two branches you were working on.(first, Switch to branch you want to merge everything in)
+git merge <:branch_you_want_to_merge:> --allow-unrelated-histories
+git reset HEAD~                                      |Undo last commit
 git reset                                            |You know when you commit changes that are not complete, this sets your index to the latest commit that you want to work on with.
 git reset <:mode:> <:COMMIT:>                        |
 git reset HEAD filename                              |Revert staged changes
@@ -54,3 +62,4 @@ git log -S puppy                                              |Search the commit
 ## Reference: 
 - https://www.viget.com/articles/effectively-using-git-with-subversion/
 - https://stackoverflow.com/questions/3491270/git-merge-apply-changes-to-code-that-moved-to-a-different-file
+- https://git-scm.com/docs/git-request-pull

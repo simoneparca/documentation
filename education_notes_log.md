@@ -1,4 +1,14 @@
 
+# SQL ID 
+
+- [Oracle: select ID_SEQ.nextval from DUAL](https://stackoverflow.com/questions/30818614/how-to-get-sequence-nextval-from-sql-in-jdbc)
+- [insert into mytable(x,y) values (1,2) returning id into v_id;](https://stackoverflow.com/questions/3657565/select-ident-current-tablename-in-oracle)
+- [SQLServer 2005+: INSERT INTO aspnet_GameProfiles(UserId,GameId) OUTPUT INSERTED.ID VALUES(@UserId, @GameId), myCommand.ExecuteScalar()](https://stackoverflow.com/questions/5228780/how-to-get-last-inserted-id)
+- [SQLServer: If table has a column of type INT IDENTITY (or BIGINT IDENTITY), INSERT INTO dbo.YourTable(columns....) VALUES(...) SELECT SCOPE_IDENTITY()](https://stackoverflow.com/questions/9477502/get-the-last-inserted-row-id-with-sql-statement)
+- [Approfondimento del precedente](https://stackoverflow.com/questions/42648/best-way-to-get-identity-of-inserted-row)
+- https://stackoverflow.com/questions/40168310/create-a-sql-sequence-programmatically-in-java
+- https://stackoverflow.com/questions/39838157/sequence-next-value-in-select-statement
+
 # 2020-03-28 Approfondimenti su Gradle (e Maven)
 
 - https://www.baeldung.com/ant-maven-gradle
@@ -45,17 +55,14 @@ https://stackoverflow.com/questions/48349393/can-i-make-intellij-nonnull-nullabl
 ## 4/4/2020
 ### main IDE feature compared:
 
-aa  bbbbb   ccc
-11  d
-
-| Eclipse                  | IntelliJ
-| -------------------------|---------
-|+ Open and Free           |- Gratis
-|- buggy and slow        |+ fast and smart (but non so much, not always)
-|+ lot of plugin and tools |+ essential and well integrated, plugin
-|+ Enterprise Development  |- Enterprise Developement Requires Ultimate Editon
-|+ Javascript native?      |- Javascript requires WebStorms?
-|+ Better null analisys    |+ External annotations
+ | Eclipse                   | IntelliJ                                           |
+ | ------------------------- | -------------------------------------------------- |
+ | + Open and Free           | - Gratis                                           |
+ | - buggy and slow          | + fast and smart (but non so much, not always)     |
+ | + lot of plugin and tools | + essential and well integrated, plugin            |
+ | + Enterprise Development  | - Enterprise Developement Requires Ultimate Editon |
+ | + Javascript native?      | - Javascript requires WebStorms?                   |
+ | + Better null analisys    | + External annotations                             |
 
 Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più completa, e per l'analisi migliore dei null pointer sui generici: mi permette di scrivere codice 100% esente dai null pointer. Almeno finchè non mi risolvono l'issue 236740
 
@@ -76,7 +83,28 @@ Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più c
 - [Corso Ongaro lezione 2][ongaro]
 - [Corso full-stack Udemy][studyeasy]
 
+## 2020-11-13
+
+- Working with Configuration Files.docx
+- [Inizio training / test su codility](https://app.codility.com/programmers/)
+- [Azure DevOps - Create an Organization](https://github.com/MicrosoftDocs/azure-devops-docs/blob/master/docs/organizations/accounts/create-organization.md)
+- [Azure DevOps - Create a project](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page
+
+## 2020-11-19
+
+ - https://angular.io/start#getting-started-with-a-basic-angular-app
+ - https://stackblitz.com/edit/angular-parsi-test
+ - 
+
 ## TODO: Altre cose da vedere
+
+ - https://angular.io/tutorial#tour-of-heroes-app-and-tutorial
+ - https://angular.io/guide/architecture-components#template-syntax
+ - https://angular.io/guide/architecture-components#introduction-to-components-and-templates
+ - https://angular.io/guide/component-interaction#component-interaction
+ - https://angular.io/start/start-routing#adding-navigation
+ - https://angular.io/start/start-deployment#deploying-an-application
+ - 
 
 - [C and C++ software development toolkit for SOAP/XML](https://en.wikipedia.org/wiki/GSOAP)
 - [Free installer for Windows programs](https://jrsoftware.org/isinfo.php)
@@ -88,6 +116,6 @@ war ear aar
 https://stackshare.io/
 pubblicare quando avrò progetto gradle:
 - https://community.ptc.com/t5/Windchill/Windchill-tips-building-your-project-with-Maven/td-p/292254
- - https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
+- https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
 - http://www.gwtproject.org/
 - https://www.sonarqube.org/downloads/
