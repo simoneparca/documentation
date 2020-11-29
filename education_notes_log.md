@@ -92,22 +92,21 @@ Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più c
 
 ## 2020-11-19
 
- - https://angular.io/start#getting-started-with-a-basic-angular-app
- - https://stackblitz.com/edit/angular-parsi-test
- - 
+- https://angular.io/start#getting-started-with-a-basic-angular-app
+- https://stackblitz.com/edit/angular-parsi-test
+- [Publish Markdown files from Git repository to wiki](azure-devops-docs/publish-repo-to-wiki.md)
+
+# 2020-11-29
+
+- [Create a project in Azure DevOps](azure-devops-docs/create-project.md)
+- [Markdown syntax for files, widgets, and wikis](azure-devops-docs/markdown-guidance.md)
+- https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops
+  
+## WIP
+
+- https://docs.microsoft.com/en-us/azure/devops/artifacts/overview?view=azure-devops
 
 ## TODO: Altre cose da vedere
-
- - https://angular.io/tutorial#tour-of-heroes-app-and-tutorial
- - https://angular.io/guide/architecture-components#template-syntax
- - https://angular.io/guide/architecture-components#introduction-to-components-and-templates
- - https://angular.io/guide/component-interaction#component-interaction
- - https://angular.io/start/start-routing#adding-navigation
- - https://angular.io/start/start-deployment#deploying-an-application
- - 
-
-- [C and C++ software development toolkit for SOAP/XML](https://en.wikipedia.org/wiki/GSOAP)
-- [Free installer for Windows programs](https://jrsoftware.org/isinfo.php)
 
 My Gity-Wiki
 
@@ -119,3 +118,40 @@ pubblicare quando avrò progetto gradle:
 - https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
 - http://www.gwtproject.org/
 - https://www.sonarqube.org/downloads/
+
+- [Atom è un editor di testo e IDE open source e sviluppato da GitHub, basato su Chromium ed è scritto in CoffeeScript, il che gli permette di essere eseguito su qualsiasi piattaforma supportata da Chromium. Una delle sue caratteristiche principali è la possibilità di sviluppare pacchetti utilizzando Node.js. Atom possiede inoltre supporto al sistema di controllo di versione Git.](https://atom.io/docs)
+- Electron (precedentemente noto come Atom Shell) è un framework open source gestito e ospitato da GitHub. Electron consente lo sviluppo della GUI di applicazioni desktop utilizzando tecnologie Web: combina il motore di rendering Chromium e il runtime Node.js. Electron è il principale framework per la GUI dietro alcuni importanti progetti open source tra cui Atom, GitHub Desktop, Light Table, Visual Studio Code, WordPress Desktop
+
+- https://developer.mozilla.org/it/docs/Learn/Front-end_web_developer
+  - 1 HTML, HTML5
+  - 1 CSS (SASS/LESS come plus)
+    - https://developer.mozilla.org/en-US/docs/Learn/HTML
+  - 1 JavaScript (TypeScript come plus)
+    - https://developer.mozilla.org/en-US/docs/Web/JavaScript
+    - https://www.typescriptlang.org/docs/
+    - 2 NodeJS (Javascript e/o Typescript) runtime di JavaScript Open source multipiattaforma
+- 2 [Angular](https://angular.io/docs) versione>5
+    - https://angular.io/tutorial#tour-of-heroes-app-and-tutorial
+    - https://angular.io/guide/architecture-components#template-syntax
+    - https://angular.io/guide/architecture-components#introduction-to-components-and-templates
+    - https://angular.io/guide/component-interaction#component-interaction
+    - https://angular.io/start/start-routing#adding-navigation
+    - https://angular.io/start/start-deployment#deploying-an-application
+    - https://angular.io/guide/setup-local#setting-up-the-local-environment-and-workspace
+- 1 VueJS
+- 1 ReactJS
+- 1 Rest
+- 2 [open source end-to-end software development platform](GitLab.org)
+- 1 Python
+- 1 Database relazionali
+- 1 Database No Sql
+- 1 Architetture SOA & MicroServices
+- 1 Paradigmi OOP
+- 2 TDD-BDD-test automatici
+- 1 jQuery
+- Preprocessori, task runner o module bundler (Grunt, Gulp, Webpack)
+- Responsive development
+- https://www.codecademy.com/
+- [C and C++ software development toolkit for SOAP/XML](https://en.wikipedia.org/wiki/GSOAP)
+- [Free installer for Windows programs](https://jrsoftware.org/isinfo.php)
+

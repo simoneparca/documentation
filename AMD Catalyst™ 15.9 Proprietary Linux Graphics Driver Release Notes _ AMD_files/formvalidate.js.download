@@ -1,0 +1,317 @@
+/**
+ * @projectDescription A Form Validation Library
+ * @author AMD Email Marketing Team
+ * @version 1.00 Release
+ * @since 0.1 ALPHA
+ * @return {Object}  Returns public references to private functions of formValidate
+ */
+
+var formValidate = (function() {
+	/**
+	* Check input to determine if a form field or a value has been passed in and return the input in a form usable by the other validation functions
+	* @param  {String/Number/Object} input The input to be checked for type
+	* @return {String}       Returns string/value for the provided input
+	*/						 
+	function getInput(input) {
+		try {
+			if (typeof input == "string") {
+				return input;
+			} else if (typeof input == "number") {
+				return input.toString();
+			} else if (typeof input.value == "string") {
+				return input.value;
+			} else if (typeof input.value == "number") {
+				return input.value.toString();
+			} else {
+				return "";
+			}
+		} catch(err) {
+			// "input" is something we're not set up to use. Return a blank string.
+			return "";
+		}
+	}
+							 
+	/**
+	* Trims all spaces from front and back of string
+	* @param  {String} value The string to have leading/trailing spaces trimmed from
+	* @return {String}       Returns string minus leading/trailing spaces
+	*/
+	function trimSpaces(value) {
+		return getInput(value).replace(/^\s+|\s+$/g, '');
+	}
+	
+	/**
+	* Strips all whitespace from a string
+	* @param  {String} value The string to have whitespace removed from
+	* @return {String}       Returns string minus all whitespace characters (space, tab, return, newline, etc.)
+	*/
+	function stripSpaces(value) {
+		return getInput(value).replace(/[\t\v\f\r\n \u00a0\u2000-\u200b\u2028-\u2029\u3000]+/g, '');
+	}
+	
+	/**
+	* Test to see if field contents meet minimum specified length
+	* @param  {object} field  The form field to test the value length for
+	* @param  {Int/String}    length The length to compare to
+	* @return {Boolean}       Returns True if field is equal to or greater than the specified length and False if "length"
+	*						  is not an integer or field is not minumum length
+	*/
+	function minLength(field, length) {
+		if (!isInteger(length)) {
+			return false;
+		} else {
+			return (getInput(field).length >= parseInt(length, 10));
+		}
+	}
+	
+	/**
+	* Test to see if field contents are less than maximum specified length
+	* @param  {object} field  The form field to test the value length for
+	* @param  {Int/String}    length The length to compare to
+	* @return {Boolean}       Returns True if field is less than or equal to the specified length and False if "length"
+	*						  is not an integer or field is greater than the maximum length
+	*/
+	function maxLength(field, length) {
+		if (!isInteger(length)) {
+			return false;
+		} else {
+			return (getInput(field).length <= parseInt(length, 10));
+		}
+	}
+
+	/**
+	* Test to see if field contents are exactly the specified length
+	* @param  {object} field  The form field to test the value length for
+	* @param  {Int/String}    length The length to compare to
+	* @return {Boolean}       Returns True if field is equal to the specified length and False if "length"
+	*						  is not an integer or field is less than/greater than the specified length
+	*/
+	function exactLength(field, length) {
+		if (!isInteger(length)) {
+			return false;
+		} else {
+			return (getInput(field).length === parseInt(length, 10));
+		}
+	}	
+	
+	/**
+	* Test to see if field contents are between a specified minimum and maximum length
+	* @param  {object} field  The form field to test the value length for
+	* @param  {Int/String}    length1 The minimum length to compare to
+	* @param  {Int/String}    length2 The mmaximum length to compare to
+	* @return {Boolean}       Returns True if field is equal to the specified length and False if "length"
+	*						  is not an integer or field is less than/greater than the specified length
+	*/
+	function betweenLength(field, length1, length2) {
+		if (!isInteger(length1) || !isInteger(length2)) {
+			return false;
+		} else {
+			return ((getInput(field).length >= parseInt(length1, 10)) && (getInput(field).length <= parseInt(length2, 10)));
+		}
+	}	
+	
+	/**
+	* Test to see if field contents are an integer numeric value between a specified minimum and maximum value
+	* @param  {object} field  The form field to test the value length for
+	* @param  {Int/String}    lowerange The minimum value to compare to
+	* @param  {Int/String}    upperrange The mmaximum value to compare to
+	* @return {Boolean}       Returns True if field is equal to the specified length and False if "length"
+	*						  is not an integer or field is less than/greater than the specified length
+	*/
+	function integerRange(field, lowerrange, upperrange) {
+		if (!isInteger(lowerrange) || !isInteger(upperrange)) {
+			return false;
+		} else {
+			if (isInteger(field)) {
+				var value = parseInt(getInput(field), 10);
+				return ((value >= parseInt(lowerrange, 10)) && (value <= parseInt(upperrange, 10)));
+			} else {
+				return false;
+			}
+		}
+	}	
+		
+	/**
+	* Determines if string is a valid unsigned float value
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if string is a valid unsigned float or False if not
+	*/
+	function isFloat(value) {
+		value = trimSpaces(value);
+		var re = /^[0-9]*\.[0-9]+([eE][\-\+]?[0-9]+)?$/;
+		return re.test(value);
+	}
+		
+	/**
+	* Determines if string is a valid signed float value
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if string is a valid signed float or False if not
+	*/
+	function isSFloat(value) {
+		value = trimSpaces(value);
+		var re = /^[\-\+]?[0-9]*\.[0-9]+([eE][\-\+]?[0-9]+)?$/;
+		return re.test(value);
+	}
+
+	/**
+	* Determines if string is a valid unsigned integer value
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if string is a valid unsigned integer or False if not
+	*/
+	function isInteger(value) {
+		value = trimSpaces(value);
+		var re = /^\d+$/;
+		return re.test(value);
+	}
+
+	/**
+	* Determines if string is a valid signed integer value
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if string is a valid signed integer or False if not
+	*/
+	function isSigned(value) {
+		value = trimSpaces(value);
+		var re = /^[\-\+]?\d+$/;
+		return re.test(value);
+	}
+
+	/**
+	* Determines if string is composed of alpha characters only
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if string is a valid alpha characters only or False if not
+	*/
+	function isAlpha(value) {
+		value = trimSpaces(value);
+		var re = /^[a-zA-Z]+$/;
+		return re.test(value);
+	}
+
+	/**
+	* Determines if string is null, blank or composed of only whitespace characters
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if string is null, blank or composed of only whitespace characters or False if not
+	*/
+	function isNullOrWhitespace(value) {
+		value = getInput(value);
+		var re = /^\s+$/;
+		// NULL test technically redundant since getInput only returns strings - so NULL (which has typeof "object") would be returned as a zero length string
+		return (((value === null) || (value.length === 0)) || re.test(value));
+	}
+
+	/**
+	* Determines if string is a valid Canadian Postal Code
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if valid or False if it is not
+	*/
+	function isValidPostalCode(value) {
+		value = trimSpaces(value);
+		var re = /(^s*([a-z](\s)?\d(\s)?){3}$)s*/i;
+		return (re.test(value));
+	}
+
+	/**
+	* Determines if string is a valid US Zip Code
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if valid or False if it is not
+	*/
+	function isValidZipCode(value) {
+		value = trimSpaces(value);
+		var re = /^\d{5}([\-]\d{4})?$/;
+		return (re.test(value));
+	}
+	
+	/**
+	* Determines if string is a valid US Zip Code or Canadian Postal Code
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if valid or False if it is not
+	*/
+	function isValidZipPostalCode(value) {
+		return (isValidZipCode(value) || isValidPostalCode(value));	
+	}
+
+	/**
+	* Determines if a string is a valid North American or ITU-T E.123 format International Phone Number
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if valid or False if it is not
+	*/
+	function isValidPhoneNumber(value) {
+		value = trimSpaces(value);
+		var result, 
+			re = /^\+\x20?(?:[0-9]\x20?){6,14}[0-9]$/, 
+			re1 = /^(?:\+?1[\-.\x20]?)?\(?([0-9]{3})\)?[\-.\x20]?([0-9]{3})[\-.\x20]?([0-9]{4})$/;
+		if (re.test(value)) {
+			// Yes, it is an ITU-T E.123 format International Phone Number
+			result = true;
+		} else {
+			// If test fails check if Phone Number is a valid North American format number (with or without Area Code)
+			if (re1.test(value)) {
+				// Yes, it is a North American Phone Number
+				result = true;
+			} else {
+				// Phone number doesn't appear to be either an International or North American one
+				result = false;
+			}
+		}
+		return result;
+	}
+
+	/**
+	* Determines if a string is a valid North American or International Phone Number (Supporting extensions)
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if valid or False if it is not
+	*/
+	function isValidPhoneNumber2(value) {
+		value = trimSpaces(value);
+		var result, 
+			re = /^\+\x20?(?:[0-9]\x20?){6,14}[0-9]((\x20x|\x20ext)\d{1,5}){0,1}$/, 
+			re1 = /^(?:\+?1[\-.\x20]?)?\(?([0-9]{3})\)?[\-.\x20]?([0-9]{3})[\-.\x20]?([0-9]{4})((\x20x|\x20ext)\d{1,5}){0,1}$/;
+		if (re.test(value)) {
+			// Yes, it is an ITU-T E.123 format International Phone Number
+			result = true;
+		} else {
+			// If test fails check if Phone Number is a valid North American format number (with or without Area Code)
+			if (re1.test(value)) {
+				// Yes, it is a North American Phone Number
+				result = true;
+			} else {
+				// Phone number doesn't appear to be either an International or North American one
+				result = false;
+			}
+		}
+		return result;
+	}
+
+	/**
+	* Determines if a string is a valid Email Address
+	* @param  {String} value The string to be tested
+	* @return {Boolean}      Returns True if valid or False if it is not
+	*/
+	function isValidEmail(value) {
+		value = trimSpaces(value);
+		var re = /^\w+([\.\-]?\w+)*@\w+([\.\-]?\w+)*(\.\w{2,3})+$/;
+		return (re.test(value));
+	}
+	
+	// Expose those functions we wish to be publically available
+	return {
+		trim : trimSpaces,
+		strip : stripSpaces,
+		minl : minLength,
+		maxl : maxLength,
+		exact : exactLength,
+		btwnl : betweenLength,
+		range : integerRange,
+		ufloat : isFloat,
+		sfloat : isSFloat,
+		integer : isInteger,
+		signed : isSigned,
+		alpha : isAlpha,
+		blank : isNullOrWhitespace,
+		postal : isValidPostalCode,
+		zip : isValidZipCode,
+		zippostal : isValidZipPostalCode,
+		phone : isValidPhoneNumber,
+		phone2 : isValidPhoneNumber2,
+		email : isValidEmail
+	};
+}());

@@ -1,0 +1,156 @@
+function jsTrim(aString)
+{
+	//Remove all trailing white space
+	while('' + aString.charAt(aString.length-1) == ' ')
+	{
+		aString = aString.substring(0,aString.length-1);
+	}
+	
+	//Remove a leading white space
+	while('' + aString.charAt(0) == ' ')
+	{
+		aString = aString.substring(1,aString.length);
+	}
+	return aString;
+}
+
+
+function isValidPhone(number)
+{
+	var i, c;
+	for (i=0; i<number.length; i++) {
+		c = number.charAt(i);
+		if (!isDigit(c) && c != '-' && c != '(' && c != ')' && c != " ") {
+			return false;
+		}
+	}
+	return true;
+}
+
+function isDigit (c)
+{
+   return ((c >= "0") && (c <= "9"))
+}
+
+function checkBlankValue(val)
+{
+	var blRetVal;
+	val = jsTrim(val);
+	if (val == "")
+	{
+		blRetVal = false;
+	}
+	else
+	{
+		blRetVal = true;
+	}
+	return blRetVal;
+}
+
+function checkEmailAddress(email)
+{
+ 
+    var chk1 = true;
+    var chk2 = true;
+    var chk3 = true;
+    var chk4 = true;
+    var chk5 = true;
+    var chk6 = true;
+    var chk7 = true;
+    var chk8 = true;
+    var numOccur = 0;
+    var posDot = 0;
+    var posAt = 0;
+    var valEnd = 0;
+    var lenEnd = 0;
+    var numSpaces = 0;
+    var combo1 = ".@";
+    var combo2 = "@.";
+    var combo3 = "..";
+    var chunk = "ab";
+ 
+    len = email.length;
+    val = email;
+ 
+    if (len <= 0)
+        {chk1 = false}
+    else {
+        chk1 = false;
+        for (var y = 0; y < len; y++) {
+            if (val.substring(y,y+1) == " ") {
+                numSpaces = numSpaces + 1
+            }
+            else {
+                chk1 = true
+            }
+        }
+    }
+ 
+    if (chk1)
+        {
+        if ((len > 64) || ((len - numSpaces) < 6))
+            {chk2 = false}
+        
+        if ((val.substring(0,1) == "@") || (val.substring(0,1) == "."))
+            {chk3 = false}
+        
+        numOccur = 0;
+        for (var y = 0; y < len; y++) {
+            if (val.substring(y,y+1) == "@") {
+                numOccur = numOccur + 1;
+                posAt = y+1
+            }
+        }
+        if (numOccur != 1)
+                {chk4 = false}
+        
+        numOccur = 0;
+        for (var y = 0; y < len; y++)
+            {
+            if (val.substring(y,y+1) == ".")
+               {
+                numOccur = numOccur + 1;
+                posDot = y+1
+                }
+            }
+        if (numOccur < 1)
+            {chk5 = false}
+        
+        if (chk5)
+           {
+            valEnd = val.substring(posDot,len);
+            lenEnd = valEnd.length;
+                
+            if (lenEnd < 2)
+                {chk6 = false}
+            }
+        
+        if (chk2)
+           {
+            numOccur = 0;
+            for (var y = 0; y < (len-1); y++)
+                {
+                 chunk = val.substring(y,y+2);
+                 if ((chunk == combo1) || (chunk == combo2) || (chunk == combo3))
+                     {numOccur = numOccur + 1}
+                 }
+                
+                if (numOccur > 0)
+                        {chk7 = false};
+                }
+        
+        if (chk4 && chk5)
+            {
+            if (posAt > posDot)
+            {chk8 = false}
+            }
+        }
+ 
+if ((!chk1) || (!chk2) || (!chk3) || (!chk4) || (!chk5) || (!chk6) || (!chk7) || (!chk8))
+   {
+    return false
+    }
+else
+    {return true}
+ 
+}

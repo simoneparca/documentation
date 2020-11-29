@@ -1,0 +1,41 @@
+/**
+ * @file
+ * Example javascript file.
+ */
+
+(function ($, Drupal) {
+  'use strict';
+
+  /**
+   * Initialize gallery.
+   */
+  Drupal.behaviors.addDownloadtoGallery = {
+    attach: function (context) {
+      var $grid = $('.field--name-field-gallery-images').imagesLoaded( function () {
+        $grid.masonry({
+          "itemSelector": ".gallery_item",
+          "columnWidth": 300,
+          "gutter": 2,
+          "fitWidth": true
+        });
+      });
+      $(context).find('#blueimp-gallery').once('addDownloadtoGallery')
+      .on('slide', function (event, index, slide) {
+        var $el = $(this);
+        var gallery = $el.data('gallery');
+        var itemContainer = $(gallery.list[index]).parent();
+        var title = itemContainer.find('.image-title').text().trim();
+        var description = itemContainer.find('.field--name-field-media-information').text().trim();
+        var link = slide.firstChild.src;
+        var $node = $el.find('a.download');
+        $el.find('.title').text(title);
+        $el.find('.caption').text(description);
+        $node.attr('href', '').attr('download', '');
+        if (link) {
+            $node.attr('href', link);
+            $node.attr('download', link);
+        }
+      });
+    }
+  };
+})(jQuery, Drupal);

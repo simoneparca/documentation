@@ -1,25 +1,3 @@
-TODO:
-
-- 2 [Angular](https://angular.io/docs) versione>5
-
-- 1 JavaScript (TypeScript come plus)
-  - 1 NodeJS (Javascript e/o Typescript) runtime di JavaScript Open source multipiattaforma
-- 1 VueJS
-- 1 ReactJS
-- 1 Rest
-- 1 [open source end-to-end software development platform](GitLab.org)
-- 1 Python
-- 1 Database relazionali
-- 1 Database No Sql
-- 1 Architetture SOA & MicroServices
-- 1 Paradigmi OOP
-- 2 TDD-BDD-test automatici
-- 1 HTML, HTML5
-- 1 CSS (SASS/LESS come plus)
-- 1 jQuery
-- Preprocessori, task runner o module bundler (Grunt, Gulp, Webpack)
-- Responsive development
-
 ## A selection of educational resources
 
 - [Normalizzazione schemi relazionali](normalizzazione_schemi_relazionali.md)
@@ -66,7 +44,6 @@ TODO:
 
 # Maker's Resources
   - [Online PCB Design Tool](https://easyeda.com/)
-
 
 ### [Cronologia e appunti di varie attività formative svolte](education_notes_log.md)
 

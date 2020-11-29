@@ -1,0 +1,2463 @@
+/* eslint-disable */
+/* ! analyticscore v2.3.0 */
+/*
+ * Analytics Core Script
+ * Last Update 10:23 EST 04/21/2020
+ */
+
+window.dataLayer = window.dataLayer || [];
+window.AMDAnalytics = window.AMDAnalytics || {};
+window.AMDAnalytics.version = 'Core V2.3.0 - 04/21/2020 10:23 ET';
+/**
+ * Simulate negative lookbehind for RegEx
+ * @param  {string} text - string to be tested (text in normal order)
+ * @param  {RegExp} expression - negative look forward RegEx - text to test must be reversed
+ * @return {Boolean} - Return true if match and false if not
+ */
+function negativeLookBehind(text,expression) {
+  'use strict';
+  return expression.test(text.split('').reverse().join(''));
+}
+
+/**
+ * Return an array of values for a specified field name in objects contained in an array
+ * @param  {Array<Object>} input - An array of objects for when we want to obtain the values for a specific field in all the objects
+ * @param  {string} field - Name of the fields we are looking for the value for
+ * @return {Array}  - An array of the values for the corresponding field name in each object - Objects that do not contain the specified field name do not add a value to the array
+ */
+function getFields(input, field) {
+  'use strict';
+  var output = [];
+  var l = input.length;
+  for (var i = 0; i < l; ++i) {
+    var value = input[i][field];
+    if (typeof value !== 'undefined') {
+      output.push(value);
+    }
+  }
+  return output;
+}
+
+/**
+ * Get a pipe delimited list of Lift segments the user belongs to
+ * @return {string} - Pipe delimited list of Lift segments or '(not set)' if not in any segments
+ */
+function getLiftSegmentIDList() {
+  'use strict';
+  if (typeof AcquiaLift !== 'undefined' && typeof AcquiaLift.currentSegments !== 'undefined') {
+    var temp = getFields(AcquiaLift.currentSegments, 'id');
+    if (temp.length > 0) {
+      return temp.join('|');
+    }
+    else {
+      return '(not set)';
+    }
+  }
+  else {
+    return '(not set)';
+  }
+}
+
+/**
+ * Set up listeners to detect if a Lift personalization has been shown on the page
+ */
+(function personalizationStatus() {
+  'use strict';
+  window.personalizationShown = -1;
+  window.addEventListener('acquiaLiftContentAvailable', function (e) {
+    window.personalizationShown = 1;
+  });
+
+  window.addEventListener('acquiaLiftStageCollection', function (e) {
+    if (window.personalizationShown === -1) {
+      window.personalizationShown = 0;
+    }
+    jQuery('div[data-lift-slot]').each(function (hrps) {
+      var per = '';
+      var slot = jQuery(this);
+      var pcheck = slot.hasClass('lift-static');
+      per = !pcheck ? 'P' : '';
+      var link = slot.find('a');
+      link.each(function (hlps) {
+        var link2 = jQuery(this);
+        if (!link2.attr('lpos')) {
+          link2.attr('lpos', 'Para' + (hrps + 1) + per + '|Link' + (hlps + 1));
+        }
+        if (!link2.attr('heropos')) {
+          link2.attr('heropos', 'Para' + (hrps + 1) + per + '|Link' + (hlps + 1));
+        }
+      });
+    });
+  });
+
+})();
+
+(function colorboxInit() {
+  var cssId = 'colorboxCss';
+  if (jQuery('#' + cssId).length <= 0) {
+    var head = document.getElementsByTagName('head')[0];
+    var link = document.createElement('link');
+    link.id = cssId;
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = 'https://download.amd.com/css/colorbox.css';
+    link.media = 'all';
+    head.appendChild(link);
+  }
+  _load_js('https://download.amd.com/js/jquery.colorbox-min.js');
+})();
+
+function createCSSSelector(selector, style) {
+  if (!document.styleSheets) return;
+  if (document.getElementsByTagName('head').length == 0) return;
+
+  var head = document.head || document.getElementsByTagName('head')[0];
+  var styleSheet = document.createElement('style');
+  var css = selector + ' {' + style + ';}';
+
+  styleSheet.type = 'text/css';
+  if (styleSheet.styleSheet){
+    styleSheet.styleSheet.cssText = css;
+  } else {
+    styleSheet.appendChild(document.createTextNode(css));
+  }
+  head.appendChild(styleSheet);
+}
+
+function UpdateQueryString(key, value, url) {
+  if (!url) url = window.location.href;
+  var checkUrl = new RegExp(key + '=' ,'gi');
+  if (checkUrl.test(url)) {
+    var re = new RegExp("([?&])" + key + "=.*?(&|#|$)(.*)", "gi"),
+        hash;
+      if (re.test(url)) {
+      if (typeof value !== 'undefined' && value !== null) {
+        return url.replace(re, '$1' + key + "=" + value + '$2$3');
+      }
+      else {
+        hash = url.split('#');
+        url = hash[0].replace(re, '$1$3').replace(/(&|\?)$/, '');
+        if (typeof hash[1] !== 'undefined' && hash[1] !== null) {
+          url += '#' + hash[1];
+        }
+        return url;
+      }
+    }
+    else {
+      if (typeof value !== 'undefined' && value !== null) {
+        var separator = url.indexOf('?') !== -1 ? '&' : '?';
+        hash = url.split('#');
+        url = hash[0] + separator + key + '=' + value;
+        if (typeof hash[1] !== 'undefined' && hash[1] !== null) {
+          url += '#' + hash[1];
+        }
+        return url;
+      }
+      else {
+        return url;
+      }
+    }
+  }
+  else {
+    return url;
+  }
+}
+
+var gopt = /https?:\/\/(www\.)?amd\.com\/en\/(campaigns\/pro\-solutions|ryzen\-(pro|5)|products\/ryzen\-threadripper)(\/?$|\/?#|\/?\?)/.test(window.location.href.toLowerCase());
+
+if (gopt === true) {
+createCSSSelector('.async-hide', 'opacity: 0 !important');
+
+(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;
+ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'');};
+ (a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null;},c);h.timeout=c;
+ })(window,document.documentElement,'async-hide','dataLayer',4000,
+ {'GTM-58DFX4Z':true});
+}
+cvLnkTrack = {};
+
+/* New Cookie Code */
+// var i = 0;
+var CookieExpiryTime = {
+  END_OF_SESSION: 0,
+  SECOND: 1000,
+  MINUTE: 1000 * 60,
+  HOUR: 1000 * 60 * 60,
+  DAY: 1000 * 60 * 60 * 24,
+  MONTH: 1000 * 60 * 60 * 24 * 30,
+  YEAR: 1000 * 60 * 60 * 24 * 365,
+  NEVER: 1000 * 60 * 60 * 24 * 365 * 20
+};
+var Cookie = {
+  Set: function (c_name, value, expTime, path, domain, samesite, secure) {
+    var e = '';
+    var d;
+    var s;
+    if (expTime) {
+      d = new Date();
+      d.setTime(d.getTime() + (expTime));
+      e = '; expires=' + d.toUTCString();
+    }
+    if (!path) {
+      path = '/';
+    }
+    if (!domain) {
+      var tempURI = parseUri(document.URL);
+      domain = tempURI.domain + '.' + tempURI.tld;
+    }
+    if (!samesite) {
+      if (shouldSendSameSiteNone(navigator.userAgent)) {
+        s = ';SameSite=None;Secure';
+      }
+      else {
+        s = '';
+      }
+    }
+    else if (samesite.toLowerCase() === 'lax') {
+      s = ';SameSite=Lax';
+    }
+    else if (samesite.toLowerCase() === 'strict') {
+      s = ';SameSite=Strict';
+    }
+    else if (samesite.toLowerCase() === 'none') {
+      if (shouldSendSameSiteNone(navigator.userAgent)) {
+        s = ';SameSite=None;Secure';
+      }
+      else {
+        s = '';
+      }
+    }
+    else {
+      s = '';
+    }
+    if (!!secure && s.toLowerCase().indexOf('samesite=none') < 0) {
+      s = s + ';Secure';
+    }
+    document.cookie = c_name + '=' + value + e + '; path=' + path + '; domain=' + domain + s;
+  },
+  Get: function (c_name) {
+    var match = c_name + '=';
+    var c = '';
+    var ca = document.cookie.split(';');
+    var i;
+    var cl;
+    for (i = 0, cl = ca.length; i < cl; i++) {
+      c = String(ca[i]).trim();
+      if (c.indexOf(match) === 0) {
+        return c.substring(match.length, c.length);
+      }
+    }
+    return null;
+  },
+  Unset: function (c_name, path, domain) {
+    this.Set(c_name, '', -1, path, domain);
+  },
+  Enabled: function () {
+    try {
+      document.cookie = 'testcookie=1';
+      var cookiesEnabled = document.cookie.indexOf('testcookie=') !== -1;
+      document.cookie = 'testcookie=1; expires=Thu, 01-Jan-1970 00:00:01 GMT';
+      return cookiesEnabled;
+    } catch (e) {
+      return false;
+    }
+  }
+};
+
+/* parseUri BOF */
+function parseUri(str) { // http://blog.stevenlevithan.com/archives/parseuri
+  // Object { // https://www.amd.uk.com:80/abc/def/xyz/index.html?aaa=111&bbb=222#hashing
+  // anchor: hashing
+  // authority: full domain plus port: www.amd.uk.com:80
+  // directory: /abc/def/xyz/
+  // domain: amd
+  // file: index.html
+  // host: full domain: www.amd.uk.com
+  // noquery: https://www.amd.uk.com:80/abc/def/xyz/index.html
+  // password: {{password}}
+  // path: /abc/def/xyz/index.html
+  // pathLevel: parseUri(uri).pathLevel[3]; (7 maximum)
+  // pathLevel[0]: www.amd.uk.com
+  // pathLevel[1]: www.amd.uk.com/abc
+  // pathLevel[2]: www.amd.uk.com/abc/def
+  // pathLevel[3]: www.amd.uk.com/abc/def/xyz
+  // pathLevel[4]: www.amd.uk.com/abc/def/xyz/index.html
+  // pathLevel[5]:
+  // pathLevel[6]:
+  // pathLevel[7]:
+  // port: 80
+  // protocol: https
+  // query: aaa=111&bbb=222
+  // queryKey: parseUri(uri).queryKey["query parameter"];
+  // queryKey["aaa"] = 111
+  // queryKey["bbb"] = 222
+  // relative: /abc/def/xyz/index.html?aaa=111&bbb=222#hashing
+  // source: full URL: https://www.amd.uk.com:80/abc/def/xyz/index.html?aaa=111&bbb=222#hashing
+  // subdomain: www
+  // tld: uk.com
+  // user: {{username}}
+  // userInfo: {{username:password}}
+  // }
+  if (typeof parseUri.options == 'undefined' || parseUri.options === null) {
+    parseUri.options = {
+      strictMode: false,
+      key: ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'],
+      q: {
+        name: 'queryKey',
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+      },
+      parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+      }
+    };
+  }
+  var pu = parseUri.options,
+    m = pu.parser[pu.strictMode ? 'strict' : 'loose'].exec(str),
+    uri = {},
+    i = 14;
+  while (i--) {
+    uri[pu.key[i]] = m[i] || '';
+  }
+  uri[pu.q.name] = {};
+  uri[pu.key[12]].replace(pu.q.parser, function ($0, $1, $2) {
+    if ($1) {
+      uri[pu.q.name][$1] = $2;
+    }
+  });
+  var uriSplit = uri.host.split('.');
+  switch (uriSplit.length) {
+    case 2:
+      uri.subdomain = null;
+      uri.domain = uriSplit[0];
+      uri.tld = uriSplit[1];
+      break;
+    case 3:
+      uri.subdomain = uriSplit[0];
+      uri.domain = uriSplit[1];
+      uri.tld = uriSplit[2];
+      break;
+    case 4:
+      uri.subdomain = uriSplit[0];
+      uri.domain = uriSplit[1];
+      uri.tld = uriSplit[2] + '.' + uriSplit[3];
+      break;
+    default:
+      uri.subdomain = uri.domain = uri.tld = null;
+  }
+  var pathSplit = uri.path.split('/');
+  pathSplit[0] = uri.host;
+  for (p = 1; p < pathSplit.length; p++) {
+    if (pathSplit[p]) {
+      pathSplit[p] = pathSplit[p - 1] + '/' + pathSplit[p];
+    } // avoid extra entry with trailing slash
+  }
+  if (pathSplit.length < 8) {
+    for (p = pathSplit.length; p < 8; p++) {
+      pathSplit[p] = '';
+    }
+  }
+  uri.pathLevel = pathSplit;
+  uri.noquery = uri.protocol + '://' + uri.authority + uri.path;
+  return uri;
+}
+
+/* parseUri EOF */
+var sAA = {};
+var cvOldLinkClickObject = {};
+cvSPwebtrack = 0;
+cvURLCheck = cvSurveyURLCheck = window.location.href.toLowerCase();
+if ((parseUri(cvURLCheck).queryKey['errors'] ||'') ==='true') {
+  cvURLCheck = cvSurveyURLCheck = parseUri(cvURLCheck).noquery.toLowerCase();
+}
+// ==============================================
+var cvURL;
+try {
+  cvURL = decodeURI(document.URL.toLowerCase());
+} catch (err) {
+  cvURL = unescape(document.URL.toLowerCase());
+}
+
+if ((parseUri(cvURL).queryKey['errors'] ||'') === 'true') {
+  cvURL = parseUri(cvURL).noquery.toLowerCase();
+}
+
+cvURL = cvURL.length ? cvURL : '';
+cvURL = cvURL.length ? cvURL.replace(/([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+/g, 'pii') : '';
+cvURL = cvURL.length ? cvURL.replace(/([a-zA-Z0-9_.+-])+\%40(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+/g, 'pii') : '';
+cvURL = cvURL.length ? cvURL.replace(/@/g, '(at)') : '';
+
+// add trailing slash on folders BOF
+if (!((/((\.[a-z]{3,4})|(\/))$/i.test(cvURL)) || (/#|\?/i.test(cvURL)))) {
+  cvURL = cvURL + '/';
+}
+if ((/#|\?/i.test(cvURL))) {
+  if ((cvURL.indexOf('/#') == -1) && (cvURL.indexOf('/?') == -1)) {
+    if ((cvURL.indexOf('#') != -1) && (cvURL.indexOf('?') != -1)) {
+      if (cvURL.indexOf('#') > cvURL.indexOf('?')) { // ? is first
+        cvURLtempSplit = cvURL.split('?');
+        cvURL = cvURLtempSplit[0] + '/?' + cvURLtempSplit[1];
+      } else { // # is first
+        cvURLtempSplit = cvURL.split('#');
+        cvURL = cvURLtempSplit[0] + '/#' + cvURLtempSplit[1];
+      }
+    } else if (cvURL.indexOf('#') != -1) {
+      cvURLtempSplit = cvURL.split('#');
+      cvURL = cvURLtempSplit[0] + '/#' + cvURLtempSplit[1];
+    } else if (cvURL.indexOf('?') != -1) {
+      cvURLtempSplit = cvURL.split('?');
+      cvURL = cvURLtempSplit[0] + '/?' + cvURLtempSplit[1];
+    }
+  }
+} // add trailing slash on folders EOF
+cvURL = cvURL.replace(/#$/, ''); // remove trailing hash
+
+cvURL = UpdateQueryString('spUserID', 'pii', cvURL);
+
+function getIEVersionPre10() {
+  var ie = ( !!window.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
+  return ie;
+}
+
+
+// ==============================================
+// Legal Consent LightBoxes
+/*
+jQuery(document).ready(function () {
+  var consentWidth = 700;
+  var consentHeight = 700;
+  var consentW = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+  if (consentW < consentWidth) {
+    consentWidth = consentW - 10;
+  }
+  if (consentWidth < 630) {
+    consentWidth = 630;
+  }
+  if (/amd\.com\/en\-us\/who\-we\-are\/newsroom\/assets\-agreement\/assets(\/$|$|\?|\#)/i.test(cvURL)) {
+    var cvLUG = cfGetCookie('c_BrandConsent') || '';
+    if (cvLUG != 'Agreed') {
+      LightBoxWindow2('https://experience.amd.com/Legal-Consent/brand/agree_brand/', consentWidth, consentHeight, 'https://experience.amd.com/Legal-Consent/brand/access-denied_brand/');
+    } else {
+      cfSetCookie('c_BrandConsent', 'Agreed', 365);
+    }
+  }
+});
+*/
+
+// driver installed BOF
+if ((cvURLCheck.indexOf('driverinstalled/index.html') != -1) && (cvURLCheck.indexOf('%%') != -1)) {
+  cvURLCheck = replaceAll(cvURLCheck, '%%', '%');
+  window.location.href = cvURLCheck;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
+}
+
+function replaceAll(string, find, replace) {
+  return string.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+}
+// driver installed EOF
+
+cvAddThis = 0;
+cvAMDWebProperties = ',amd.com,amd.com.cn,amd.com.tw,amd.co.jp,amdcompare.com,amd.ru,ati.com,ati.de,graphics-scout.com,atiplus,amdassets.com,amdrewards.com,amdinfo.co.kr,amdsurveys.com,feedback.amd.com,seamicro.com,gpuopen.com,radeon.com,radeon.wpengine.com,ve.ga,amd.local'; // AMD Web Properties
+cvAMDWebProperties += ',phx.corporate-ir.net,eloqua.com,flixfacts.co.uk,radeonramdisk.com,amd4u.com,radeonmemory.com,amd.mkt6303.com,www.pages03.net,gizmosphere.org,amdpromos.com,amdfanstore.com,amd-d2vienna.com,amd-ibcshow.com,amd-auvegas.com,amdhub.in'; // other properties
+// cvAMDWebProperties += ",amd.onlinebrandstore.net,standupforfirepro.com,fireprographics.com,amd-ext.uat5.hosted.jivesoftware.com,amd3.c-3.com,amdimprovision.com.br,en25.com,amdryzenreviews.com,betterred.com,amdtaiwan.com,amd-member.com,outstart.com,amdvisionary.com,amd-site.com,amdchannel.com.cn,amdlivestrong.com,amdmotorsports.com,amdprocycling.com,amdsports.com,amdadvantage.com,atistickers.com,lookbeyond.de,x86-64.org,amdquizzes.com,amd64.org,amd-unleash.com,amd-bilder.de,entertainmentsimplified.com,marketbuilder3.com,ati.jp,accelerateresults.com,amd-firefly.com,amdtaiwan.com.tw,amd64.co.kr,amdathlon.com,amdlive.com,amd.com.hk,amd.jp,amd.de,atiplushp.com,atipluslenovo.com"; //old domains
+cvDNTDomains = '';
+cvSocialDomains = new Array('163', '12seconds', '4travel', 'advogato', 'ameba', 'anobii', 'asmallworld', 'backtype', 'badoo', 'bebo', 'bigadda', 'bigtent', 'biip', 'blackplanet', 'blogspot', 'blogster', 'blomotion', 'bolt', 'brightkite', 'buzznet', 'cafemom', 'care2', 'classmates', 'cloob', 'collegeblender', 'cyworld', 'cyworld', 'dailymotion', 'daum', 'delicious', 'deviantart', 'digg', 'diigo', 'disqus', 'draugiem', 'facebook', 'faceparty', 'fc2', 'flickr', 'flixster', 'fotolog', 'foursquare', 'friendfeed', 'friendsreunited', 'friendster', 'fubar', 'gaiaonline', 'geni', 'goodreads', 'grono', 'habbo', 'hatena', 'hexun', 'hi5', 'hyves', 'ibibo', 'identi', 'ifeng', 'imeem', 'infoseek', 'intensedebate', 'irc-galleria', 'iwiw', 'jaiku', 'kaixin001', 'kaixin002', 'kakaku', 'kanshin', 'kozocom', 'last', 'linkedin', 'livejournal', 'me2day', 'meetup', 'mister-wong', 'mixi', 'mixx', 'mouthshut', 'multiply', 'myheritage', 'mylife', 'myspace', 'myspace', 'myyearbook', 'nasza-klasa', 'netlog', 'nettby', 'netvibes', 'nicovideo', 'ning', 'odnoklassniki', 'orkut', 'pakila', 'people', 'photobucket', 'pinterest', 'plaxo', 'plurk', 'qq', 'reddit', 'renren', 'seesaa', 'skyrock', 'slideshare', 'smcb', 'smugmug', 'sohu', 'sonico', 'studivz', 'stumbleupon', 't', 'tabelog', 'tagged', 'taringa', 'tripit', 'trombi', 'trytrend', 'tuenti', 'tumblr', 'twine', 'twitter', 'twitch', 'uhuru', 'viadeo', 'vimeo', 'vkontakte', 'vox', 'wayn', 'weibo', 'weourfamily', 'wer-kennt-wen', 'wordpress', 'xanga', 'xing', 'yaplog', 'yelp', 'youtube', 'yuku', 'zooomr', 'google');
+cvSearchDomains = new Array('abcsok', 'alicesuche', 'alltheweb', 'altavista', 'anonymouse', 'aol', 'aolrecherche', 'aolsearch', 'aolsvc', 'ask', 'baidu', 'biglobe', 'bing', 'centrum', 'chip', 'clix', 'cuil', 'daum', 'eniro', 'euroseek', 'excite', 'fireball', 'goo', 'google', 'googlesyndication', 'icq', 'infoseek', 'ixquick', 'kvasir', 'libero', 'live', 'livedoor', 'lycos', 'mail', 'msn', 'myway', 'naver', 'netscape', 'nifty', 'rambler', 'recherche', 'recherchet2', 'search', 'searchalot', 'seznam', 'startpagina', 'suche', 'szukaj', 'terra', 'tiscali', 'toile', 'ucweb', 'uol', 'vinden', 'virgilio', 'walla', 'yahoo', 'yandex', 'web', 'youdao', 'webalta');
+cvAMDShortDomains = new Array('amd', 'amdsurveys', 'amd-member', 'seamicro');
+cvOtherPartnerExcludeDomains = new Array('dataram', 'adcash', 'gobongo', 'youradexchange', 'openadserving', 'otvetim-vopros', 'undefined', 'drotator', 'uxup', 'wpengine');
+cvPartnerExcludeDestination_LID = new Array('ms-backgroundImage', ' ms-backgroundImage');
+cvPartnerExcludeDomains = cvOtherPartnerExcludeDomains.join(',') + ',' + cvSearchDomains.join(',') + ',' + cvSocialDomains.join(',') + cvAMDWebProperties; // PartnerRef
+cvSourceExcludeDomains = new Array('devgurus.amd.com', 'devforums.amd.com', 'forums.amd.com', 'support.amd.com'); // PartnerRef
+cvDownloadExtentions = 'run,msi,rpm,gz,tar,bz2,dmg,sit,gzip,patch,exe,zip,wav,mp3,wma,mov,mpg,avi,wmv,mp4,doc,pdf,xls,ppt,pps,csv,jpg,png,bmp,wmf,tif,docx,xlsx,pptx,cbr,iso'; // File extensions to track as downloadable content
+cvDriverExtensions = 'run,msi,rpm,gz,tar,bz2,dmg,sit,gzip,exe,zip,iso'; // File extensions to include for driver downloads
+cvNonDownloadExtensions = 'do,aspx,ashx,asp,jp,ru,it'; // File extensions to exclude for driver downloads
+cvDriverDownloadDomains = ['support.amd.com', 'www2.ati.com', 'drivers.amd.com']; // array of AMD driver download domains
+tmpDestination_LID = '';
+ReportSuiteID = '';
+cvTagName = '';
+cvPTagName = '';
+cvPPTagName = '';
+cvPPPTagName = '';
+cvLinkType = '';
+cvRsid = '';
+cvRsidVal = '';
+Destination_URL_wParam = '';
+Destination_Name = '';
+Destination_LPOS = '';
+Destination_LID = '';
+Destination_ID = '';
+nodesForm = '';
+cvElqFormId = '';
+cvFormName = '';
+cvFormPassed = '';
+cvElqAssetType = '';
+cvTimedReading = '';
+cvSearchKeywordLoop = 0;
+cvVideoID = '';
+cvURL_fragment = '';
+cvSTL = 0;
+cvGTMID = '';
+cvCVAReferrerURL = '';
+cvLinkedSearch = 0;
+cvCookieDURL = '';
+cvCookieRURL = '';
+csTotalCounts = 0;
+cvFFonPlayerReady = '';
+cvGACheckSearchAjax = '';
+cvSearchURL = '';
+cvGASearchURL = '';
+cvOSSEvents = '';
+cvDestination_URL = '';
+sAA.referrer = document.referrer.toLowerCase();
+cvUTCdate = getCurrentTimeUTC();
+
+/* Set report suite ID dynamically based on domain */
+var cvLang = cfDetectLanguage() || '';
+var cfCheckRSID = (function () {
+  var ReportSuiteID = '';
+  var cvCurrency = 'USD';
+  var cvLang = cfDetectLanguage() || '';
+  var cvHostName = parseUri(cvURL).host;
+  if ((cvURL.indexOf('driverinstalled') != -1) || (cvURL.indexOf('driver-installed') != -1)) { // cvDI = Driver Installed
+    ReportSuiteID = 'amdvgraphics';
+  } else if (cvHostName == 'amdrewards.com' || cvHostName == 'www.amdrewards.com') {
+    ReportSuiteID = 'amdvamdrewards';
+  } else if (cvHostName == 'arena.amd.com') {
+    ReportSuiteID = 'amdvfpp-global,amdvarena';
+  } else if (cvURL.indexOf('amd-d2vienna.com') !== -1 || cvURL.indexOf('amd-ibcshow.com') !== -1) {
+    ReportSuiteID = 'amdvgraphics,amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+  } else if (cvHostName == 'verification.amd.com') {
+    ReportSuiteID = 'amdvcomponent,amdvverification';
+  } else if (cvHostName == 'amdhub.in' || cvHostName == 'www.amdhub.in') {
+    ReportSuiteID = 'amdvamdhubin';
+  } else if (/^(www\.)?amd\.com/i.test(cvHostName)) {
+    if (cvURL.indexOf('/ccc/') != -1) {
+      ReportSuiteID = 'amdvgraphics,amdvappzone';
+    // } else if (/(www\.)?amd\.com\/(en|fr|de|ja|ko|pt|ru|es|zh\-(hans|hant))\/graphics\//.test(cvURL)) {
+    //   ReportSuiteID = 'amdvgraphics';
+    //   if (/(www\.)?amd\.com\/(en|fr|de|ja|ko|pt|ru|es|zh\-(hans|hant))\/graphics\/(workstation|pro\-)/.test(cvURL)) {
+    //     ReportSuiteID += ',amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+    //   } else {
+    //     ReportSuiteID += ',amdvaudiencehome';
+    //   }
+
+    } else if (/(www\.)?amd\.com\/(en|fr|de|ja|ko|pt|ru|es|zh\-(hans|hant))\/support(\/(#|\?|$)?)/.test(cvURL)) {
+      if (cvURL.indexOf('/search/') != -1) {
+        ReportSuiteID = 'amdvsupport,amdvoss';
+      } else if ((cvURL.indexOf('download/ccc') != -1) || (cvURL.indexOf('/ccc/') != -1)) {
+        ReportSuiteID = 'amdvaudiencegaming'; // ccc
+      } else {
+        ReportSuiteID = 'amdvsupport';
+      }
+    } else if (/amd\.com\/(en|de|fr|ja|ko|pt|ru|es|tr|pl|zh\-hans)\/(corporate|press-releases)\/?/i.test(cvURL)) {
+      ReportSuiteID = 'amdvcorporate';
+      if (/amd\.com\/(en|de|fr|ja|ko|pt|ru|es|tr|pl|zh\-hans)\/(corporate\/newsroom|press-releases)\/?/i.test(cvURL)) {
+        ReportSuiteID += ',amdvir';
+      }
+    } else if (/amd\.com\/(en|de|fr|ja|ko|pt|ru|es|tr|pl|zh\-hans)\/partner\/?/i.test(cvURL)) {
+      ReportSuiteID = 'amdvcomponent,amdvaudiencebusiness,amdvfpp-global,amdvbusiness';
+      if (cvURL.indexOf('\/en\/') != -1) {
+        ReportSuiteID = 'amdvfpp-na,' + ReportSuiteID;
+      } else if (/\/(fr|de|it|pl|ru|tr)\//i.test(cvURL)) {
+        ReportSuiteID = 'amdvfpp-emea,' + ReportSuiteID;
+      } else if (/\/(pt|es)\//i.test(cvURL)) {
+        ReportSuiteID = 'amdvfpp-la,' + ReportSuiteID;
+      } else if (/\/(ko|ja)\//i.test(cvURL)) {
+        ReportSuiteID = 'amdvfpp-apac,' + ReportSuiteID;
+      }  else if (cvURL.indexOf('\/zh-hans\/') != -1) {
+        ReportSuiteID = 'amdvfpp-cn,' + ReportSuiteID;
+      }
+    } else if (cvURL.indexOf('/vision/shop') != -1) {
+      if (cvURL.indexOf('/cool-apps/pages') != -1) {
+        ReportSuiteID = 'amdvgraphics,amdvaudiencegaming,amdvappzone';
+      } else {
+        ReportSuiteID = 'amdvgraphics,amdvaudiencegaming';
+      }
+    } else if (/\/(en|es|de|fr|ko|ja|pt|ru|zh-han(s|t))\/shop\//i.test(cvURL)) {
+      ReportSuiteID = 'amdvshop';
+      var match =  /\/(en|es|de|fr|ko|ja|pt|ru|zh-han(s|t))\/shop\/(br|ca|cn|de|es|fr|gb|in|se|us)/i.exec(cvURL);
+      if (!!match) {
+        ReportSuiteID += ',amdvshop-' + match[3];
+      }
+    } else if (/(\/(en|es|de|fr|ko|ja|pt|ru|zh-han(s|t))\/ryzen(\-(3|5|7))?(\/)?($|#|\?))/i.test(cvURL)) {
+      ReportSuiteID = 'amdvcomponent,amdvaudiencehome';
+    } else if (/(\/(en|es|de|fr|ko|ja|pt|ru|zh-han(s|t))\/ryzen\-pro(\/)?($|#|\?))/i.test(cvURL)) {
+      ReportSuiteID = 'amdvcomponent,amdvaudiencebusiness,amdvbusiness';
+    }
+    else if (/.*products/i.test(cvURL)) {
+      if (/embedded/i.test(cvURL)) {
+        if (/\/(processors|graphics|chipsets)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvbusiness';
+        } else {
+          ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvbusiness';
+        } // default /embedded/
+      } else if (/workstation/i.test(cvURL)) {
+        ReportSuiteID = 'amdvgraphics,amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+      } else if (/\/(tablets|laptops|desktops)/i.test(cvURL)) {
+        ReportSuiteID = 'amdvclient,amdvaudiencehome';
+        if (/\/gaming/i.test(cvURL)) {
+          ReportSuiteID = 'amdvclient,amdvaudiencegaming';
+        } else if (/\/business/i.test(cvURL)) {
+          ReportSuiteID = 'amdvclient,amdvaudiencebusiness,amdvbusiness';
+        }
+      } else if (/graphics/i.test(cvURL)) {
+        if (/desktop/i.test(cvURL)) {
+          if (/r(9|7)/i.test(cvURL)) {
+            ReportSuiteID = 'amdvgraphics,amdvaudiencegaming';
+          } else {
+            ReportSuiteID = 'amdvgraphics,amdvaudiencehome';
+          } // default /desktop/
+        } else if (/notebook/i.test(cvURL)) {
+          if (/(r(7|9)-m200)|8900m/i.test(cvURL)) {
+            ReportSuiteID = 'amdvgraphics,amdvaudiencegaming';
+          } else {
+            ReportSuiteID = 'amdvgraphics,amdvaudiencehome';
+          } // default /notebook/
+        } else if (/workstation/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgraphics,amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+        } else if (/help-me-choose/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgraphics,amdvaudiencehome';
+        } else if (/\/server/i.test(cvURL)) {
+          ReportSuiteID = 'amdvserver,amdvgraphics,amdvaudiencebusiness,amdvbusiness';
+        } else {
+          ReportSuiteID = 'amdvgraphics,amdvaudiencehome';
+        } // default /graphics/
+      } else if (/processors|cpu/i.test(cvURL)) {
+        if (/desktop/i.test(cvURL)) {
+          ReportSuiteID = 'amdvcomponent,amdvaudiencehome';
+        } else if (/notebook-tablet/i.test(cvURL)) {
+          ReportSuiteID = 'amdvcomponent,amdvaudiencehome';
+        } else if (/ryzen\-(7|5)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvcomponent,amdvaudiencehome';
+        } else {
+          ReportSuiteID = 'amdvcomponent,amdvaudiencehome';
+        } // default /processors/
+      } else if (/server/i.test(cvURL) || /\/(amd\-)?epyc/i.test(cvURL) ) {
+        ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness';
+      } else if (/pricing/i.test(cvURL)) {
+        if (/(opteron|fx)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness';
+        } else if (/fx|a-series/i.test(cvURL)) {
+          ReportSuiteID = 'amdvcomponent';
+        } else {
+          ReportSuiteID = 'amdvcomponent,amdvaudiencehome';
+        } // default /pricing/
+      } else if (/chipsets/i.test(cvURL)) {
+        ReportSuiteID = 'amdvcomponent,amdvaudiencebusiness,amdvbusiness';
+      } else if (/memory/i.test(cvURL)) {
+        ReportSuiteID = 'amdvcomponent,amdvaudiencegaming,amdvramdisk';
+      } else {
+        ReportSuiteID = '';
+      } // default /products/
+    } else if (/markets/i.test(cvURL)) {
+      if (/partners/i.test(cvURL)) {
+        ReportSuiteID = 'amdvaudiencebusiness';
+      } else if (/embedded/i.test(cvURL)) {
+        ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvbusiness';
+      } else if (/commercial/i.test(cvURL)) {
+        ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+      } else if (/(consumer|if-it-can-game)/i.test(cvURL)) {
+        ReportSuiteID = 'amdvclient,amdvaudiencehome';
+      } else if (/game/i.test(cvURL)) {
+        if (/shop/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgame,amdvaudiencegaming,amdvgraphics,amdvshop';
+          if (/\/en\//i.test(cvURL)) {
+            ReportSuiteID = ReportSuiteID + ',amdvshop-us';
+          } else if (/\/pt\//i.test(cvURL)) {
+            ReportSuiteID = ReportSuiteID + ',amdvshop-br';
+          } else if (/\/de\//i.test(cvURL)) {
+            ReportSuiteID = ReportSuiteID + ',amdvshop-de';
+          } else if (/\/fr\//i.test(cvURL)) {
+            ReportSuiteID = ReportSuiteID + ',amdvshop-fr';
+          } else if (/\/es\//i.test(cvURL)) {
+            ReportSuiteID = ReportSuiteID + ',amdvshop-es';
+          } else if (/\/zh\-hans\//i.test(cvURL)) {
+            ReportSuiteID = ReportSuiteID + ',amdvshop-cn';
+          }
+        } else if (/downloads/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgame,amdvaudiencegaming,amdvgraphics,amdvsupport';
+        } else {
+          ReportSuiteID = 'amdvgame,amdvaudiencegaming,amdvgraphics';
+        } // default /markets/game
+      } else {
+        ReportSuiteID = '';
+      } // default /markets/
+    } else if (/solutions/i.test(cvURL)) {
+      if (/\/(tablets|laptops|desktops)/i.test(cvURL)) {
+        ReportSuiteID = 'amdvclient,amdvaudiencehome';
+      } else if (/servers/i.test(cvURL)) {
+        ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness';
+      } else if (/\/(workstations|professional)/i.test(cvURL)) {
+        ReportSuiteID = 'amdvgraphics,amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+      } else if (/\/software-partners\/(altair|ansys|citrix|comsol|dassault|dem|ensight|ptc|remotefx|siemens|spaceclaim|teradici|vmware)/i.test(cvURL)) {
+        ReportSuiteID = 'amdvgraphics,amdvaudiencebusiness,amdvbusiness,amdvworkstation';
+      } else if (/embedded/i.test(cvURL)) {
+        ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvbusiness';
+      } else if (/semi\-custom/i.test(cvURL)) {
+        ReportSuiteID = 'amdvsemicustom';
+      } else if (/pro/i.test(cvURL)) {
+        ReportSuiteID = 'amdvclient,amdvaudiencebusiness,amdvbusiness';
+      } else {
+        ReportSuiteID = '';
+      } // default /solutions/
+    } else if (/who-we-are/i.test(cvURL)) {
+      if (/404/i.test(cvURL)) {
+        ReportSuiteID = 'amdv404';
+      } else if (/site-map/i.test(cvURL)) {
+        ReportSuiteID = '';
+      } else {
+        ReportSuiteID = 'amdvcorporate';
+      } // default /who-we-are/
+    } else if (/press-releases/i.test(cvURL)) {
+      ReportSuiteID = 'amdvcorporate,amdvir';
+    } else if (/\/partner\/amd\-and\-(supermicro|hpe)/i.test(cvURL) ) {
+      ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness';
+    } else if (/(\/where\-to\-buy\/((2nd\-gen\-)?ryzen|epyc)|\/campaigns\/ryzen\-pibs)/i.test(cvURL)) {
+      ReportSuiteID = 'amdvshop';
+      if (/\/en\//i.test(cvURL)) {
+        ReportSuiteID = ReportSuiteID + ',amdvshop-us';
+      } else if (/\/pt\//i.test(cvURL)) {
+        ReportSuiteID = ReportSuiteID + ',amdvshop-br';
+      } else if (/\/de\//i.test(cvURL)) {
+        ReportSuiteID = ReportSuiteID + ',amdvshop-de';
+      } else if (/\/fr\//i.test(cvURL)) {
+        ReportSuiteID = ReportSuiteID + ',amdvshop-fr';
+      } else if (/\/es\//i.test(cvURL)) {
+        ReportSuiteID = ReportSuiteID + ',amdvshop-es';
+      } else if (/\/zh\-hans\//i.test(cvURL)) {
+        ReportSuiteID = ReportSuiteID + ',amdvshop-cn';
+      }
+    } else if (/(innovations|technologies)/i.test(cvURL)) {
+      if (/\/(2010-present|2000-2009|1970-1999)/i.test(cvURL)) {
+        ReportSuiteID = 'amdvcorporate';
+      } else if (/(store|sense)\-mi|cpu\-cooler\-solution/i.test(cvURL)) {
+        ReportSuiteID = 'amdvcomponent,amdvconsumer';
+      } else if (/zen\-core/i.test(cvURL)) {
+        ReportSuiteID = 'amdvcomponent';
+      } else if (/servers/i.test(cvURL)) {
+        ReportSuiteID = 'amdvcorporate';
+      } else if (/software-technologies/i.test(cvURL)) {
+        if (/\/(apu|multicore|photo-composer|turbo-core|compute-cores|hsa|screen-mirror|face-login|gesture-control|experiences-faq|wireless-display|discovery)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvclient,amdvaudiencehome';
+        } else if (/\/(catalyst|gcn|eyefinity|crossfire|hd3d|dual-graphics|tressfx|trueaudio|mantle|enduro)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgraphics,amdvaudiencegaming';
+        } else if (/amp/i.test(cvURL)) {
+          ReportSuiteID = 'amdvcomponent,amdvaudiencegaming,amdvramdisk';
+        } else if (/das/i.test(cvURL)) {
+          ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvbusiness';
+        } else if (/\/(direct-connect|open-compute)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness';
+        } else if (/app-acceleration/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgraphics,amdvaudiencegaming,amdvappzone';
+        } else if (/app-zone/i.test(cvURL)) {
+          ReportSuiteID = 'amdvgraphics,amdvaudiencegaming,amdvappzone';
+        } else if (/\/(hypertransport|quick-stream|surround-house)/i.test(cvURL)) {
+          ReportSuiteID = 'amdvcorporate';
+        } else {
+          ReportSuiteID = '';
+        } // default /software-technologies/
+      } else {
+        ReportSuiteID = 'amdvcorporate';
+      } // default /innovations/
+    } else if (cvURL.indexOf('amdhomepage.aspx') != -1) {
+      ReportSuiteID = ''; // homepage
+    } else if (/\/(en(-(us|gb))?|de(-de)?|es(-(es|xl))?|fr(-fr)?|it(-it)?|ja(-jp)?|ko(-kr)?|pl(-pl)?|pt(-br)?|ru(-ru)?|tr(-tr)?|zh(-(cn|hans|tw|hant)))(\/home(page)?)?(\/?($|#|\?))/i.test(cvURL)) {
+      ReportSuiteID = ''; // homepage
+    } else {
+      ReportSuiteID = 'amdvother'; // default www.amd.com; no audience
+    }
+  } else if (cvHostName == 'wwwd.amd.com') {
+    ReportSuiteID = 'amdvembedded,amdvaudiencebusiness';
+  } else if (cvHostName == 'game.amd.com') {
+    ReportSuiteID = 'amdvgraphics,amdvaudiencegaming,amdvgame';
+  } else if (cvHostName == 've.ga' || cvHostName.indexOf('radeon.com') != -1 || cvHostName.indexOf('betterred.com') != -1) {
+    ReportSuiteID = 'amdvgraphics,amdvaudiencegaming';
+  } else if ((cvHostName == 'fpp.amd.com') || (cvHostName == 'registration-fpp.amd.com') || (cvHostName == 'partner.amd.com')) {
+    ReportSuiteID = 'amdvcomponent,amdvaudiencebusiness,amdvfpp-global,amdvbusiness';
+    if (cvURL.indexOf('en-us') != -1) {
+      ReportSuiteID = 'amdvfpp-na,' + ReportSuiteID;
+    } else if (/(en\-gb|fr\-fr|\/fr\/|de\-de|\/de\/|it\-it|pl\-pl|ru\-ru|\/ru\/|es\-es|tr\-tr)/i.test(cvURL)) {
+      ReportSuiteID = 'amdvfpp-emea,' + ReportSuiteID;
+    } else if (/(pt-br|en-mx|es-mx)/i.test(cvURL)) {
+      ReportSuiteID = 'amdvfpp-la,' + ReportSuiteID;
+    } else if (/(en-in|en-sa|ko-kr|\/ko\/|ja-jp|\/ja\/|jp-jp)/i.test(cvURL)) {
+      ReportSuiteID = 'amdvfpp-apac,' + ReportSuiteID;
+    } else if (cvURL.indexOf('zh-cn') != -1 || cvURL.indexOf('zh-hans') != -1) {
+      ReportSuiteID = 'amdvfpp-cn,' + ReportSuiteID;
+    }
+  } else if ((cvHostName == 'support.amd.com') || (cvHostName == 'emailcustomercare.amd.com')) {
+    if (cvURL.indexOf('/search/') != -1) {
+      ReportSuiteID = 'amdvsupport,amdvoss';
+    } else if ((cvURL.indexOf('download/ccc') != -1) || (cvURL.indexOf('/ccc/') != -1)) {
+      ReportSuiteID = 'amdvaudiencegaming'; // ccc
+    } else {
+      ReportSuiteID = 'amdvsupport';
+    }
+  } else if (cvHostName == 'onlineservices.amd.com') {
+    if (cvURL.indexOf('/icss/') != -1) {
+      ReportSuiteID = 'amdvsupport';
+    }
+  } else if (cvHostName == 'community.amd.com') {
+    if ((cvURL.indexOf('game') != -1) || (cvURL.indexOf('gaming') != -1)) {
+      ReportSuiteID = 'amdvgraphics,amdvaudiencegaming,amdvgame,amdvblogs';
+    } else if ((cvURL.indexOf('partners') != -1) || (cvURL.indexOf('business') != -1)) {
+      ReportSuiteID = 'amdvaudiencebusiness,amdvbusiness,amdvblogs';
+    } else {
+      ReportSuiteID = 'amdvblogs';
+    }
+  } else if ((cvURL.indexOf('amddevcentral.com') != -1) || cvHostName == 'developer.amd.com' || cvHostName == 'media.amddevcentral.com' || cvHostName == 'download-developer.amd.com' || cvHostName == 'devgurus.amd.com' || cvHostName == 'gpuopen.com') {
+    ReportSuiteID = 'amdvaudiencedeveloper,amdvdev,amdvbusiness';
+  } else if (cvHostName == 'shop.amd.com') {
+    cvShopAudience = '';
+    ReportSuiteID = 'amdvshop';
+    if (cvURL.indexOf('/gaming') != -1) {
+      cvShopAudience = ReportSuiteID += ',amdvaudiencegaming';
+    } else if (cvURL.indexOf('/home') != -1) {
+      cvShopAudience = ReportSuiteID += ',amdvaudiencehome';
+    } else if (cvURL.indexOf('/business') != -1) {
+      cvShopAudience = ReportSuiteID += ',amdvaudiencebusiness';
+    }
+    if (cvURL.indexOf('category:') != -1) {
+      if ((cvURL.indexOf('graphic+card') != -1) || (cvURL.indexOf('processor') != -1) || (cvURL.indexOf('motherboard') != -1)) {
+        if (cvShopAudience == '') {
+          ReportSuiteID += ',amdvaudiencegaming';
+        }
+        ReportSuiteID += ',amdvcomponent';
+      } else if ((cvURL.indexOf('notebook') != -1) || (cvURL.indexOf('desktop') != -1) || (cvURL.indexOf('tablet') != -1)) {
+        if (cvShopAudience == '') {
+          ReportSuiteID += ',amdvaudiencehome';
+        }
+        ReportSuiteID += ',amdvclient';
+      } else if (cvURL.indexOf('server') != -1) {
+        if (cvShopAudience == '') {
+          ReportSuiteID += ',amdvaudiencebusiness';
+        }
+        ReportSuiteID += ',amdvserver';
+      } else if (cvURL.indexOf('workstation') != -1) {
+        if (cvShopAudience == '') {
+          ReportSuiteID += ',amdvaudiencebusiness';
+        }
+        ReportSuiteID += ',amdvcomponent,amdvworkstation';
+      }
+    }
+  } else if ((cvHostName == 'forums.amd.com') || (cvHostName == 'devforums.amd.com')) {
+    if ((cvURL.indexOf('forums.amd.com/devforum') != -1) || (cvHostName == 'devforums.amd.com')) {
+      ReportSuiteID = 'amdvaudiencedeveloper,amdvdev,amdvforums';
+    } else if (cvURL.indexOf('forums.amd.com/forum') != -1) {
+      if (typeof (cvIsDevforum) !== 'undefined') {
+        if (cvIsDevforum == 'yes') {
+          ReportSuiteID = 'amdvaudiencedeveloper,amdvdev,amdvforums';
+        }
+      } else {
+        ReportSuiteID = 'amdvsupport,amdvforums';
+      }
+    } else if (cvURL.indexOf('forums.amd.com/game') != -1) {
+      ReportSuiteID = 'amdvgraphics,amdvaudiencegaming,amdvgame,amdvforums';
+    } else {
+      ReportSuiteID = 'amdvsupport,amdvaudiencegaming,amdvforums';
+    }
+  } else if (cvHostName == 'phx.corporate-ir.net' || cvHostName == 'ir.amd.com' || cvHostName == 'quarterlyearnings.amd.com') {
+    ReportSuiteID = 'amdvcorporate,amdvaudiencebusiness,amdvir';
+  } else if (cvHostName == 'products.amd.com') {
+    ReportSuiteID = 'amdvcomponent';
+  } else if ((cvHostName == 'search.amd.com') || (cvURL.indexOf('/search/') != -1)) {
+    ReportSuiteID = 'amdvoss';
+  } else if (cvHostName == 'cmp.amd.com') {
+    ReportSuiteID = 'amdvcmp01';
+  } else if (cvHostName == 'shop-qa.amd.com' || cvHostName == 'shop-auth.amd.com' || cvHostName == 'shop-sit.amd.com' || cvHostName == 'shopcontent-auth.amd.com' || cvHostName == 'shop-new.amd.com' || cvHostName == 'shopapp-sit.amd.com' || cvHostName == 'shop-preprod.amd.com' || cvHostName == 'shopcontent-auth-sit.amd.com' || cvHostName == 'shopcontent-auth-dit.amd.com' || cvHostName == 'shopapp-dit.amd.com' || cvHostName == 'shop-dit.amd.com' || cvHostName == 'shopapp-design.amd.com') {
+    ReportSuiteID = 'amdvtest-fd';
+  } else if (cvHostName == 'server.amd.com') {
+    ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvbusiness'; // amdvserver = AMD Server
+  } else if ((cvHostName == 'global.amd.com') || (cvHostName == 'experience.amd.com') || (cvHostName == 'amd.mkt6303.com') || (cvHostName == 'www.pages03.net/advancedmicrodevicesinc')) {
+    ReportSuiteID = 'amdverror';
+  } else if (cvURL.indexOf('seamicro.com') != -1) {
+    ReportSuiteID = 'amdvserver,amdvaudiencebusiness,amdvseamicro,amdvbusiness';
+  } else if (cvURL.indexOf('amd3.c-3.com') != -1) {
+    ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvsalespro';
+  } else if (cvURL.indexOf('gizmosphere.org') != -1) {
+    ReportSuiteID = 'amdvembedded,amdvaudiencedeveloper,amdvgizmosphere';
+  } else if ((cvURL.indexOf('radeonramdisk.com') != -1) || (cvURL.indexOf('radeonmemory.com') != -1)) {
+    ReportSuiteID = 'amdvcomponent,amdvaudiencegaming,amdvramdisk'; // amvother14 = AMD Ramdisk
+  } else if (cvURL.indexOf('fireprographics.com') != -1) {
+    ReportSuiteID = 'amdvcomponent,amdvaudiencebusiness,amdvworkstation,amdvbusiness'; // amdvcomponent = AMD Component
+  } else if (cvURL.indexOf('survey.foreseeresults.com') != -1) {
+    ReportSuiteID = 'amdvforesee';
+  } else if (cvURL.indexOf('amd4u.com') != -1) {
+    ReportSuiteID = 'amdvgraphics,amdvaudiencegaming';
+  } else if (cvURL.indexOf('querycn.php') != -1) {
+    ReportSuiteID = 'amdvsupport,amdvaudiencehome';
+  } else if ((cvURL.indexOf('/mynda/') != -1) || (cvURL.indexOf('mynda.amd.com') != -1)) {
+    ReportSuiteID = 'amdvcorporate,amdvaudiencebusiness,amdvnda,amdvbusiness';
+  } else if ((cvHostName.indexOf('-auth2007.amd.com') != -1) || (cvHostName.indexOf('-auth.amd.com') != -1) || (cvHostName.indexOf('-new.amd.com') != -1) || (cvHostName.indexOf('-prod.amd.com') != -1) || (cvHostName.indexOf('localhost') != -1) || (cvURL.indexOf('.hosted.jivesoftware.com') != -1) || (cvURL.indexOf('files.fuelintegrated.co.uk') != -1)) {
+    ReportSuiteID = 'amdvtest';
+  } else if (cvURL.indexOf('cchecker') != -1) {
+    ReportSuiteID = 'amdvgraphics,amdvaudiencehome';
+  } else if ((cvURL.indexOf('amdcentral') != -1) || (cvURL.indexOf('singanet') != -1)) {
+    ReportSuiteID = 'amdvcentral';
+    if (cvURL.indexOf('amdcentral.amd.com') != -1) {
+      ReportSuiteID += ',amdvcentral-corp';
+      if (cvURL.indexOf('emea-amdcentral.amd.com') != -1) {
+        ReportSuiteID += ',amdvcentral-emea';
+      } else if (cvURL.indexOf('cn-amdcentral.amd.com') != -1) {
+        ReportSuiteID += ',amdvcentral-cn';
+      } else if (cvURL.indexOf('mys-amdcentral.amd.com') != -1) {
+        ReportSuiteID += ',amdvcentral-mys';
+      } else if ((cvURL.indexOf('sgp-amdcentral.amd.com') != -1) || (cvURL.indexOf('singanet') != -1)) {
+        ReportSuiteID += ',amdvcentral-sgp';
+      }
+    }
+  } else if (cvURL.indexOf('videocentral.amd.com') != -1) {
+    ReportSuiteID += ',amdvvideocentral';
+  } else if (cvURL.indexOf('searchamdcentral.amd.com') != -1) {
+    ReportSuiteID += ',amdvcentral-search';
+  } else if (cvURL.indexOf('connect.amd.com') != -1) {
+    ReportSuiteID += 'amdvconnect';
+  } else if ((cvURL.indexOf('ati.com') != -1) || (cvURL.indexOf('file:') != -1) || (cvURL.indexOf('translate') != -1) || (cvURL.indexOf('proxy.ashx') != -1) || (cvURL.indexOf('webcache') != -1)) {
+    ReportSuiteID = 'amdvjunk';
+  } else if ((cvURL.indexOf('subscriptions.amd.com/greatpower') != -1)) {
+    ReportSuiteID = 'amdvembedded,amdvaudiencebusiness,amdvbusiness,amdvglobal';
+  } else if (cvHostName == 'amdryzenreviews.com') {
+    ReportSuiteID = 'amdvglobal';
+  } else {
+    ReportSuiteID = 'amdvother';
+  }
+  if ((ReportSuiteID.indexOf('amdvtest') == -1) && (ReportSuiteID.indexOf('amdvcentral') == -1) && (ReportSuiteID.indexOf('amdvconnect') == -1) && (ReportSuiteID.indexOf('amdvjunk') == -1) && (cvURL.indexOf('download/ccc') == -1) && (cvURL.indexOf('/ccc/') == -1)) {
+    if (cvURL.indexOf('support.amd.com') == -1) { // exclude support.amd.com from regional RS
+      /* Adding AMD Regional Accounts */
+      if (negativeLookBehind(cvURL,/\/nc\/(?!(pohs\/))/) || (cvURL.indexOf('zh-cn') != -1) || (cvURL.indexOf('zh-hans') != -1) || (cvURL.indexOf('.cn') != -1) || (cvURL.indexOf('querycn.php') != -1) || (cvURL.indexOf('/gc/') != -1)) {
+        ReportSuiteID = 'amdvregions-cn,' + ReportSuiteID; // AMD China
+        cvCurrency = 'CNY';
+      } else if ((cvURL.indexOf('/tw/') != -1) || (cvURL.indexOf('zh-tw') != -1) || (cvURL.indexOf('zh-hant') != -1)) {
+        ReportSuiteID = 'amdvregions-tw,' + ReportSuiteID; // AMD Taiwan
+        cvCurrency = 'TWD';
+      } else if ((cvURL.indexOf('/kr/') != -1) || (cvURL.indexOf('ko-kr') != -1) || (cvURL.indexOf('/ko/') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-kr,' + ReportSuiteID; // AMD Korea
+        cvCurrency = 'KRW';
+      } else if ((cvURL.indexOf('/jp/') != -1) || (cvURL.indexOf('ja-jp') != -1) || (cvURL.indexOf('/ja/') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-jp,' + ReportSuiteID; // AMD Japan
+        cvCurrency = 'JPY';
+      } else if (cvURL.indexOf('/sg/') != -1) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-sg,' + ReportSuiteID; // AMD Singapore
+        cvCurrency = 'SGD';
+      } else if (cvURL.indexOf('/au/') != -1) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-au,' + ReportSuiteID; // AMD Australia
+        cvCurrency = 'AUD';
+      } else if (cvURL.indexOf('/my/') != -1) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-my,' + ReportSuiteID; // AMD Malaysia
+        cvCurrency = 'MYR';
+      } else if (negativeLookBehind(cvURL,/\/ni\/(?!(pohs\/))/) || (cvURL.indexOf('/en-in') != -1) || (cvHostName == 'amdhub.in' || cvHostName == 'www.amdhub.in')) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-in,' + ReportSuiteID; // AMD India
+        cvCurrency = 'INR';
+      } else if (cvURL.indexOf('/sv/') != -1 || (cvURL.indexOf('/sv-se') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-sv,' + ReportSuiteID; // AMD Sweden
+        cvCurrency = 'SEK';
+      } else if (cvURL.indexOf('/hk/') != -1) {
+        ReportSuiteID = 'amdvmegaregion-apac,amdvregions-hk,' + ReportSuiteID; // AMD Hong Kong (English)
+        cvCurrency = 'HKD';
+      } else if (cvURL.indexOf('/apj/') != -1) {
+        ReportSuiteID = 'amdvmegaregion-apac,' + ReportSuiteID; // AMD APJ
+      } else if (negativeLookBehind(cvURL,/\/ac\/(?!(pohs\/))/)  || negativeLookBehind(cvURL,/\/su\/(?!(pohs\/))/)  || (cvURL.indexOf('/en/') != -1) || (cvURL.indexOf('en-us') != -1) || (cvURL.indexOf('en-na') != -1) || (cvURL.indexOf('en-ca') != -1) || (cvURL.indexOf('/na/') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-na,' + ReportSuiteID; // AMD North America (English)
+      } else if ((cvURL.indexOf('/la/') != -1) || negativeLookBehind(cvURL,/\/se\/(?!(pohs\/))/)  || (cvURL.indexOf('es-la') != -1) || (cvURL.indexOf('es-xl') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-la,amdvregions-la,' + ReportSuiteID; // AMD Latin America (Espanol)
+      } else if (negativeLookBehind(cvURL,/\/rb\/(?!(pohs\/))/)  || (cvURL.indexOf('pt-br') != -1) || (cvURL.indexOf('/pt/') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-la,amdvregions-br,' + ReportSuiteID; // AMD Brazil (Portugues)
+        cvCurrency = 'BRL';
+      } else if ((cvURL.indexOf('en-mx') != -1) || (cvURL.indexOf('es-mx') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-la,' + ReportSuiteID; // AMD Mexico (English & Spanish)
+        cvCurrency = 'MXN';
+      } else if ((cvURL.indexOf('/uk/') != -1) || (cvURL.indexOf('en-gb') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-uk,' + ReportSuiteID; // AMD United Kingdom (English)
+        cvCurrency = 'GBP';
+      } else if (negativeLookBehind(cvURL,/\/rf\/(?!(pohs\/))/)  || (cvURL.indexOf('fr-fr') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-fr,' + ReportSuiteID; // AMD France (Francais)
+      } else if (negativeLookBehind(cvURL,/\/ed\/(?!(pohs\/))/)  || (cvURL.indexOf('de-de') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-de,' + ReportSuiteID; // AMD Germany
+      } else if ((cvURL.indexOf('/it/') != -1) || (cvURL.indexOf('it-it') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-it,' + ReportSuiteID; // AMD Italy (Italiano)
+      } else if ((cvURL.indexOf('/pl/') != -1) || (cvURL.indexOf('pl-pl') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-pl,' + ReportSuiteID; // AMD Poland (Polski)
+        cvCurrency = 'PLN';
+      } else if ((cvURL.indexOf('/ru/') != -1) || (cvURL.indexOf('ru-ru') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-ru,' + ReportSuiteID; // AMD Russia (Russian)
+        cvCurrency = 'RUB';
+      } else if ((cvURL.indexOf('/tr/') != -1) || (cvURL.indexOf('tr-tr') != -1)) {
+        ReportSuiteID = 'amdvmegaregion-emea,amdvregions-tr,' + ReportSuiteID; // AMD Turkey (Turkce)
+        cvCurrency = 'TRY';
+      } else if (cvURL.indexOf('/emea/') != -1) {
+        ReportSuiteID = 'amdvmegaregion-emea,' + ReportSuiteID; // emea
+      }
+    }
+    var tmpcvURL = cvURL.replace(/https?:\/\//, '');
+    if (/^(www|community).amd.com.*/i.test(tmpcvURL) && !/((pro|instinct|creators).radeon.com)|(gpuopen.com)|(developer.amd.com)|(^community.amd.com.*\/.*(firepro|ryzen\-pro|radeon\-pro|prorender|amd\-business|radeon\-instinct\-accelerators|devgurus|server\-gurus))|(^www.amd.com.*((\/case-studies\/.*)|(icafe|\-pro\-|epyc|opteron|server|next\-horizon|ryzen.*pro|radeon.*pro|threadripper)|((\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/processors\/|\/campaigns\/).*(frontier|virtualization|vr.*creator|amd\-and|opteron|blockchain|machine\-learning|semi\-custom|pro.graphics|prorender|threadripper|g4\-offer|v340|commercial|sdk\-agreement|heavy\-metal\-contest|designwithoutcompromise|firepro|datacenter|wx|workstation|server|professional|business|epyc|embedded|pro\-(gpu|solutions|partner)|radeon\-pro|athlon\-pro|(athlon|radeon|(amd|ryzen).*)\-pro\-))))|((^radeon.com)|(gaming.radeon.com)|(amdrewards.com)|(^community.amd.com.*(gaming|red\-team))|(^www.amd.com.*((rx|vega|vulkan|gaming|relive|crossfire|wattman|technologies\-graphics)|(ryzen\-(5|7|9))|(products.*ryzen\-(5|7|9)(|\-[0-9]{4}.*)$)|(\/gaming\/($|.*))|(\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/campaigns\/).*(graphics.*card|vr\-|rdna|frtc|radeon\-(vii|rx|consumer|software|5.*)|rx|freesync|free\-sync|esports|e\-sports|amd4u|cne|msi|raise\-the\-game|featured\-games|equipped|raise\-the\-game|rx.*|quake|alien|far\-cry|square\-enix|promotions\-comp))))|((^community.amd.com.*\/(support\-forums)\/)|(\/support)(|\/.*)$)|((^community.amd.com.*\/(amd\-partners)\/)|(\/partner(|\/.*)$))|((^community.amd.com.*\/(amd\-corporate|community\-help)\/)|(\/corporate(|\/.*)$))|((^www.amd.com((.([a-z]{2}(|\-[a-z]{4}))(|\/)$)|.*((((\/gaming|support|corporate|partner|press-release|error\/)($|.*))|(\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/campaigns\/).*(workfront|25x20|vr\-|rdna|frtc|radeon\-(vii|rx|consumer|5.*)|rx|freesync|free\-sync|esports|e\-sports|amd4u|cne|msi|raise\-the\-game|featured\-games|equipped|raise\-the\-game|rx.*|alien|far\-cry|square\-enix|promotions\-comp))))))|(^community.amd.com.*\/thread\/)|(graphics|radeon|catalyst|hd|ati|firepro|fire pro|display|autodetect|freesync|products\/specifications|promotions(|\/|2)$|cooler|chipsets|technologies(|\/)$|exascale|overdrive|technologies\-processors)/.test(tmpcvURL)) {
+      ReportSuiteID = 'amdvbsclient,' + ReportSuiteID; // Client Business Segment
+    }
+    if (/^(www|community).amd.com.*/i.test(tmpcvURL) && !/(((pro|instinct|creators).radeon.com)|(gpuopen.com)|(developer.amd.com)|(^community.amd.com.*\/.*(firepro|ryzen\-pro|radeon\-pro|prorender|amd\-business|radeon\-instinct\-accelerators|devgurus|server\-gurus))|(^www.amd.com.*((\/case-studies\/.*)|(icafe|\-pro\-|epyc|opteron|server|next\-horizon|ryzen.*pro|radeon.*pro|threadripper)|((\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/processors\/|\/campaigns\/).*(frontier|virtualization|vr.*creator|amd\-and|opteron|blockchain|machine\-learning|semi\-custom|pro.graphics|prorender|threadripper|g4\-offer|v340|commercial|sdk\-agreement|heavy\-metal\-contest|designwithoutcompromise|firepro|datacenter|wx|workstation|server|professional|business|epyc|embedded|pro\-(gpu|solutions|partner)|radeon\-pro|athlon\-pro|(athlon|radeon|(amd|ryzen).*)\-pro\-|security\-manageability|(windows|chromebook)\-for\-education)))))|((^radeon.com)|(gaming.radeon.com)|(amdrewards.com)|(^community.amd.com.*(gaming|red\-team))|(^www.amd.com.*((rx|vega|vulkan|gaming|relive|crossfire|wattman|technologies\-graphics)|(ryzen\-(5|7|9))|(products.*cpu.*ryzen\-(5|7|9)(|\-[0-9]{4}.*)$)|(\/gaming\/($|.*))|(\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/campaigns\/).*(graphics.*card|vr\-|rdna|frtc|radeon\-(vii|rx|consumer|software|5.*)|rx|freesync|free\-sync|esports|e\-sports|amd4u|cne|msi|raise\-the\-game|featured\-games|equipped|raise\-the\-game|rx.*|quake|alien|far\-cry|square\-enix|promotions\-comp|ryzen\-master|store\-mi))))|((^community.amd.com.*\/(support\-forums)\/)|(\/support)(|\/.*)$)|((^community.amd.com.*\/(amd\-partners)\/)|(\/partner(|\/.*)$))|((^community.amd.com.*\/(amd\-corporate|community\-help)\/)|(\/corporate(|\/.*)$))|((^www.amd.com((.([a-z]{2}(|\-[a-z]{4}))(|\/)$)|.*((((\/gaming|support|corporate|partner|press-release|error\/)($|.*))|(\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/campaigns\/).*(workfront|25x20|vr\-|rdna|frtc|radeon\-(vii|rx|consumer|5.*)|rx|freesync|free\-sync|esports|e\-sports|amd4u|cne|msi|raise\-the\-game|featured\-games|equipped|raise\-the\-game|rx.*|alien|far\-cry|square\-enix|promotions\-comp))))))|(^community.amd.com.*\/(docs|thread)\/)|(pagenotfounderror)|(^www.amd.com.*search\?keyword)/.test(tmpcvURL)) {
+      ReportSuiteID = 'amdvbsconsumer,' + ReportSuiteID; // Consumer Business Segment
+    }
+    if (/((pro|instinct|creators).radeon.com)|(gpuopen.com)|(developer.amd.com)|(^community.amd.com.*\/.*(high.performance|hpe|hpc|firepro|ryzen\-pro|radeon\-pro|prorender|amd\-business|radeon\-instinct\-accelerators|devgurus|server\-gurus))|(^www.amd.com.*((\/case-studies\/.*)|(icafe|\-pro\-|epyc|opteron|server|supercomputer|datacenter|hpc|next\-horizon|ryzen.*pro|radeon.*pro|threadripper)|((\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/processors\/|\/campaigns\/).*(frontier|infinity\-architecture|virtualization|vr.*creator|amd\-and|opteron|blockchain|machine\-learning|semi\-custom|pro.graphics|prorender|threadripper|g4\-offer|v340|commercial|sdk\-agreement|heavy\-metal\-contest|designwithoutcompromise|firepro|datacenter|wx|workstation|server|professional|business|epyc|embedded|pro\-(gpu|solutions|partner)|radeon\-pro|athlon\-pro|(athlon|radeon|(amd|ryzen).*)\-pro\-))))/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbscommercial,' + ReportSuiteID; // Conmmercial Business Segment
+    }
+    if (/(^radeon.com)|(gaming.radeon.com)|(amdrewards.com)|(^community.amd.com.*(gaming|red\-team))|(^www.amd.com.*((rx|vega|vulkan|gaming|relive|crossfire|wattman|technologies\-graphics)|(ryzen\-(5|7|9))|(products.*cpu.*ryzen\-(5|7|9)(|\-[0-9]{4}.*)$)|(\/gaming\/($|.*))|(\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/campaigns\/).*(graphics.*card|vr\-|rdna|frtc|radeon\-(vii|rx|consumer|software|5.*)|rx|freesync|free\-sync|esports|e\-sports|amd4u|cne|msi|raise\-the\-game|featured\-games|equipped|rx.*|quake|alien|far\-cry|square\-enix|promotions\-comp|ryzen\-master|store\-mi)))/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbsgaming,' + ReportSuiteID; // Gaming Business Segment
+    }
+    if (/(^community.amd.com.*\/(support\-forums)\/)|(\/support)(|\/.*)$/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbssupport,' + ReportSuiteID; // Support Business Segment
+    }
+    if (/(^community.amd.com.*\/(amd\-partners)\/)|(\/partner(|\/.*)$)/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbspartner,' + ReportSuiteID; // Partner Business Segment
+    }
+    if (/(^community.amd.com.*\/(amd\-corporate|community\-help)\/)|(\/corporate(|\/.*)$)/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbscorporate,' + ReportSuiteID; // Corporate Business Segment
+    }
+    if (/((gpuopen.com)|explore.amd.com.*(epyc|server))|(community.amd.com.*\/.*(high.performance|devgurus|hpe|hpc|epyc|radeon\-instinct\-accelerators|server\-gurus))|(www.amd.com.*((\/case-studies\/.*)|(epyc|opteron|server|supercomputer|datacenter|hpc)|((\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/processors\/|\/campaigns\/).*(infinity\-architecture|virtualization|amd\-and|opteron|designwithoutcompromise|datacenter|server|epyc))))/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbsserver,' + ReportSuiteID; // Server Business Segment
+    }
+    if (/((^community.amd.com.*\/(support\-forums)\/)|(\/support)(|\/.*)$)|((^radeon.com)|(gaming.radeon.com)|(amdrewards.com)|(^community.amd.com.*(gaming|red\-team))|(^www.amd.com.*((rx|vega|vulkan|gaming|relive|crossfire|wattman|technologies\-graphics)|(\/gaming\/($|.*))|(\/products\/|\/graphics\/|\/technologies\/|\/where-to-buy\/|\/shop\/|\/campaigns\/).*(graphics.*card|vr\-|rdna|frtc|radeon\-(vii|rx|consumer|software|5.*)|rx|freesync|free\-sync|esports|e\-sports|amd4u|cne|msi|raise\-the\-game|featured\-games|equipped|rx.*|quake|alien|far\-cry|square\-enix|promotions\-comp))))|(shop.amd.com)|((radeon|graphics|workstation|vega|rx|firepro|driverinstalled|driver\-post\-install))/i.test(tmpcvURL) ) {
+      ReportSuiteID = 'amdvbsgraphics,' + (ReportSuiteID.indexOf('amdvgraphics') >= 0 ? '' : 'amdvgraphics,') + ReportSuiteID; // Server Business Segment
+    }
+
+    if (!(/,$/i.test(ReportSuiteID))) {
+      ReportSuiteID = ReportSuiteID + ',';
+    }
+
+    ReportSuiteID = ReportSuiteID + ((isSearchPage() && ReportSuiteID.indexOf('amdvshop') < 0) ? 'amdvoss,' : '') + 'amdvglobal';
+
+  }
+  // marketing landing pages
+  if ((cvURL.indexOf('global.amd.com') != -1) || (cvURL.indexOf('server.amd.com') != -1) || (cvURL.indexOf('experience.amd.com') != -1) || (cvURL.indexOf('explore.amd.com') != -1)) {
+    var cvMetaRSID;
+    var cvMetas = document.getElementsByTagName('meta');
+    if (cvMetas.length > 0) {
+      for (var x = 0, y = cvMetas.length; x < y; x++) {
+        if (cvMetas[x].name.toLowerCase() == 'scrs') {
+          cvMetaRSID = cvMetas[x];
+          if (cvMetaRSID.content.toLowerCase() != '') {
+            if (ReportSuiteID.indexOf('amdverror') != -1) {
+              ReportSuiteID = ReportSuiteID.replace('amdverror,', '');
+            }
+          }
+          if (cvMetaRSID.content.toLowerCase() != 'dnt') {
+            ReportSuiteID += ',' + cvMetaRSID.content.toLowerCase();
+          }
+          if (cvMetaRSID.content.toLowerCase() == 'amdvplugindev') {
+            ReportSuiteID = cvMetaRSID.content.toLowerCase();
+          }
+        }
+      }
+    }
+    var reportSuiteMatrix = {
+      amdvother02: 'amdvoss',
+      amdvother03: 'amdvserver',
+      amdvother05: 'amdvir',
+      amdvother06: 'amdvforesee',
+      amdvother07: 'amdvcomponent',
+      amdvother08: 'amdvcorporate',
+      amdvother11: 'amdvseamicro',
+      amdvother12: 'amdvsalespro',
+      amdvother13: 'amdvappzone',
+      amdvother14: 'amdvramdisk',
+      amdvother16: 'amdvworkstation',
+      amdvother17: 'amdvclient',
+      amdvother18: 'amdvgraphics',
+      amdvother19: 'amdvaudiencehome',
+      amdvother20: 'amdvaudiencebusiness',
+      amdvother21: 'amdvaudiencedeveloper',
+      amdvother22: 'amdvaudiencegaming',
+      amdvother25: 'amdvgizmosphere',
+      amdvother30: 'amdvjunk'
+    };
+    for (var rprtSuite in reportSuiteMatrix) {
+      if (reportSuiteMatrix.hasOwnProperty(rprtSuite)) {
+        if (ReportSuiteID.indexOf(rprtSuite) != -1) {
+          ReportSuiteID = ReportSuiteID.replace(rprtSuite, reportSuiteMatrix[rprtSuite]);
+        }
+      }
+    }
+    ReportSuiteID = ReportSuiteID + ',amdvlandingpage';
+  }
+  if ((cvURL.indexOf('subscriptions.amd.com/redirect/') != -1)) {
+    ReportSuiteID = 'amdvother';
+  }
+  ReportSuiteID = ReportSuiteID.toLowerCase();
+  if ((ReportSuiteID.indexOf('amdvmegaregion-emea') != -1) && cvCurrency == 'USD') {
+    cvCurrency = 'EUR';
+  }
+
+  /* GA VWO tracking */
+  if (typeof (_vis_opt_settings_loaded) == 'boolean') {
+    var _combination = _vis_opt_readCookie('_vis_opt_exp_' + _vis_opt_experiment_id + '_combi');
+    if (typeof (_vis_opt_comb_name[_combination]) != 'undefined') {
+      sAA.eVar14 = _vis_opt_experiment_id + ':' + _vis_opt_comb_name[_combination];
+    }
+  }
+  // return [ReportSuiteID,cvCurrency,cvURL];
+  return {
+    ReportSuiteID: ReportSuiteID || '',
+    cvCurrency: cvCurrency || '',
+    cvURL: cvURL || '',
+    cvURLnoQuery: parseUri(cvURL).noquery.toLowerCase() || '',
+    cvLang: cvLang || '',
+    VWO: sAA.eVar14 || '',
+    cmpid: parseUri(cvURL).queryKey['cmpid'] || ''
+  };
+})();
+
+function getUTCDate() {
+  cvCurrentDT = new Date();
+  return Date.UTC(cvCurrentDT.getUTCFullYear(), cvCurrentDT.getUTCMonth(), cvCurrentDT.getUTCDate(), cvCurrentDT.getUTCHours(), cvCurrentDT.getUTCMinutes(), cvCurrentDT.getUTCSeconds());
+}
+// CVA Cross Visit Attribution BOF
+function cfCVAConversion(cvConversionType) {
+  // delete
+  if (!cvConversionType) {
+    cvConversionType = 'UK';
+  }
+  cvCVA = cfGetCookie('c_sccva') || ''; // sccva = SiteCatalyst cross visit attribution
+  if (cvCVA) { // cookie exists
+    cvCVASplit = cvCVA.split(',');
+    if (!cfis_int(cvCVASplit[0])) {
+      cvCVASplit[0] = cvCurrentDTUTC;
+    }
+    if (cfGetByteSize(cvCVA) > 950) {
+      if (cvCVA.indexOf('CV')) {
+        cvCVASplit = [cvCurrentDTUTC, 'CV', 'Clear'];
+      } else {
+        cvCVASplit = [cvCurrentDTUTC, 'Clear'];
+      }
+    }
+    cvCVASplit.shift(); // drop last time stamp
+    cvCVAtoOSC = cvCVASplit + ',CV|' + cvConversionType;
+    cvCVA = cvCurrentDTUTC + ',' + cvCVAtoOSC;
+    cfSetCookie('c_sccva', cvCVA, 365);
+    return cvCVAtoOSC;
+  } else { // no cookie;
+    cvCVARefTypeResult = cfCVARefTypeCheck();
+    cvCVAtoOSC = cvCVARefTypeResult + ',CV|' + cvConversionType;
+    cvCVA = cvCurrentDTUTC + ',' + cvCVAtoOSC;
+    cfSetCookie('c_sccva', cvCVA, 365);
+    return cvCVAtoOSC;
+  }
+}
+
+function cfFormPassed(cvFormPassedName) {
+  dataLayer.push({
+    event: 'FormComplete',
+    FormName: cvFormPassedName
+  });
+}
+
+function cfCVARefTypeCheck() {
+  return ''; // cvCVARefType;
+}
+// CVA Cross Visit Attribution EOF
+// SP2013 shop BOF
+function cfSetShopValues() { // function called onpostrender of shop item/detail page
+  if (cvURL.substring(0, 5) != 'https') {
+    if (typeof document.getElementsByName('shopUniqueID')[0] != 'undefined') {
+      s.prop32 = s.eVar32 = document.getElementsByName('shopUniqueID')[0].value; // ProductID
+      s.products = ';' + document.getElementsByName('shopUniqueID')[0].value; // ProductID
+    }
+  }
+} // SP2013 shop EOF
+
+/* Banner tracking BOF */
+function cfBannerImpression(cvBIrs, cvBIprop, cvBIevar, cvBIevent, cvBIlnkname) {}
+
+/* Banner tracking EOF */
+/* NotifyMe Error BOF */
+function cfNotifyMeError(cvProduct) {
+  dataLayer.push({
+    event: 'NotifyMeError',
+    NFMProductName: cvProduct
+  });
+  // remove for switch to GTM
+  if (cvURL.substring(0, 5) != 'https') {
+    s.account = ReportSuiteID;
+    s.linkTrackEvents = '';
+    s.prop12 = s.pageName;
+    s.prop25 = ReportSuiteID;
+    s.prop13 = s.eVar13 = 'Form|SP|NotifyMe|' + cvProduct + '|Error';
+    s.prop23 = s.eVar23 = s.referrer;
+    s.events = '';
+    if (cvDNTDomains.indexOf(cfUtility(cvURL, 'server')) == -1) {
+      s.visitorNamespace = 'amd';
+      s.trackingServer = 'metrics.amd.com';
+      s.trackingServerSecure = 'smetrics.amd.com';
+    }
+    cvSTL = 1;
+    s.tl(this, 'o', cvURL);
+    s.events = s.linkTrackEvents = '';
+    cvSTL = 0;
+    // end of remove
+  }
+}
+
+/* NotifyMe Error tracking EOF */
+/* Custom Function for Referrer Tracking */
+function cfNoReferrer(cvURL) {
+  if (cvURL.substring(0, 5) != 'https') {
+    if (cvURL.indexOf('elq=') != -1) {
+      s.referrer = 'mail://eloqua.email.campaign/';
+      cvReferrer = s.prop23 = s.eVar23 = s.referrer;
+    }
+  }
+}
+
+function cfReferrer(cvReferrer) {
+  if (cvURL.substring(0, 5) != 'https') {
+    if (cvReferrer.indexOf('/plus.url.google.com/') != -1) {
+
+      /* Clean up Google Plus referrer values */
+      document.referrer = cvReferrer;
+      cvReferrer = this.s.referrer;
+    } else if (cvReferrer.indexOf('/links.global.amd.com/') != -1) {
+      cvReferrer = document.referrer = s.referrer = 'mail://eloqua.email.campaign/';
+    }
+    cvReferrer = cvReferrer.toLowerCase();
+    if (cvReferrer && (cfPageName(cvReferrer) != s.pageName)) {
+      s.prop23 = cfUtility(cvReferrer, 'server'); // Referring Domain
+      s.referrer = s.eVar23 = cvReferrer; // Referring URL
+      return this.s.referrer;
+    }
+  }
+}
+
+/* Custom Functions for Responsive Web (RW) BOF */
+// http://blogs.adobe.com/digitalmarketing/digital-marketing/mobile/responsive-web-design-and-web-analytics/
+// userAgent assignment
+cvUA = '';
+if (navigator.userAgent) {
+  cvUA = navigator.userAgent;
+}
+cvPlatformCategory = '';
+
+/* RW: Device by UA - eVar41 */
+function cfDeviceByUA() {
+  catergorize_tablets_as_desktops = false; // If TRUE, tablets will be categorized as desktops
+  catergorize_tvs_as_desktops = false; // If TRUE, smartTVs will be categorized as desktops
+  // Check if user agent is a smart TV - http://goo.gl/FocDk
+  if (/GoogleTV|SmartTV|Internet.TV|NetCast|NETTV|AppleTV|boxee|Kylo|Roku|DLNADOC|CE\-HTML/i.test(cvUA)) {
+    cvPlatformCategory = 'tv';
+  }
+  // Check if user agent is a TV Based Gaming Console
+  else if (/Xbox|PLAYSTATION.3|Wii/i.test(cvUA)) {
+    cvPlatformCategory = 'gaming console';
+  }
+  // Check if user agent is a Tablet
+  else if (/iP(a|ro)d/i.test(cvUA) || /tablet/i.test(cvUA) && !(/RX-34/i.test(cvUA)) || /FOLIO/i.test(cvUA)) {
+    cvPlatformCategory = 'tablet';
+  }
+  // Check if user agent is an Android Tablet
+  else if (/Linux/i.test(cvUA) && /Android/i.test(cvUA) && !(/Fennec|mobi|HTC.Magic|HTCX06HT|Nexus.One|SC-02B|fone.945/i.test(cvUA))) {
+    cvPlatformCategory = 'tablet';
+  }
+  // Check if user agent is a Kindle or Kindle Fire
+  else if (/Kindle/i.test(cvUA) || /Mac.OS/i.test(cvUA) && /Silk/i.test(cvUA)) {
+    cvPlatformCategory = 'tablet';
+  }
+  // Check if user agent is a pre Android 3.0 Tablet
+  else if (/GT-P10|SC-01C|SHW-M180S|SGH-T849|SCH-I800|SHW-M180L|SPH-P100|SGH-I987|zt180|HTC(.Flyer|\_Flyer)|Sprint.ATP51|ViewPad7|pandigital(sprnova|nova)|Ideos.S7|Dell.Streak.7|Advent.Vega|A101IT|A70BHT|MID7015|Next2|nook/i.test(cvUA) || /MB511/i.test(cvUA) && /RUTEM/i.test(cvUA)) {
+    cvPlatformCategory = 'tablet';
+  }
+  // Check if user agent is unique Mobile User Agent
+  else if (/BOLT|Fennec|Iris|Maemo|Minimo|Mobi|mowser|NetFront|Novarra|Prism|RX-34|Skyfire|Tear|XV6875|XV6975|Google.Wireless.Transcoder/i.test(cvUA)) {
+    cvPlatformCategory = 'mobile';
+  }
+  // Check if user agent is an odd Opera User Agent - http://goo.gl/nK90K
+  else if (/Opera/.test(cvUA) && /Windows.NT.5/i.test(cvUA) && /HTC|Xda|Mini|Vario|SAMSUNG\-GT\-i8000|SAMSUNG\-SGH\-i9/i.test(cvUA)) {
+    cvPlatformCategory = 'mobile';
+  }
+  // Check if user agent is Windows Desktop
+  else if (/Windows.(NT|XP|ME|9)/i.test(cvUA) && !(/Phone/i.test(cvUA)) || /Win(9|.9|NT)/i.test(cvUA)) {
+    cvPlatformCategory = 'desktop';
+  }
+  // Check if agent is Mac Desktop
+  else if (/Macintosh|PowerPC/i.test(cvUA) && !(/Silk/i.test(cvUA))) {
+    cvPlatformCategory = 'desktop';
+  }
+  // Check if user agent is a Linux Desktop
+  else if (/Linux/.test(cvUA) && /X11/i.test(cvUA)) {
+    cvPlatformCategory = 'desktop';
+  }
+  // Check if user agent is a Solaris, SunOS, BSD Desktop
+  else if (/Solaris|SunOS|BSD/i.test(cvUA)) {
+    cvPlatformCategory = 'desktop';
+  }
+  // Check if user agent is a Desktop BOT/Crawler/Spider
+  else if (/Bot|Crawler|Spider|Yahoo|ia_archiver|Covario-IDS|findlinks|DataparkSearch|larbin|Mediapartners-Google|NG-Search|Snappy|Teoma|Jeeves|TinEye/i.test(cvUA) && !(/Mobile/i.test(cvUA))) {
+    cvPlatformCategory = 'bot/crawler/spider';
+  } else if (!cvUA) {
+    cvPlatformCategory = 'NoUA';
+  }
+  // Otherwise assume it is a Mobile Device
+  else {
+    cvPlatformCategory = 'mobile';
+  }
+  // Categorize Tablets as desktops
+  if (catergorize_tablets_as_desktops && cvPlatformCategory == 'tablet') {
+    cvPlatformCategory = 'desktop';
+  }
+  // Categorize TVs as desktops
+  if (catergorize_tvs_as_desktops && cvPlatformCategory == 'tv') {
+    cvPlatformCategory = 'desktop';
+  }
+  cvDeviceByUA = cvPlatformCategory;
+  return cvDeviceByUA;
+} // End cfDeviceByUA function
+// Returns true if desktop user agent is detected
+function isDesktop() {
+  cvDeviceByUA = cfDeviceByUA();
+  if (cvDeviceByUA == 'desktop') {
+    return true;
+  }
+  return false;
+}
+// Returns true if tablet user agent is detected
+function isTablet() {
+  cvDeviceByUA = cfDeviceByUA();
+  if (cvDeviceByUA == 'tablet') {
+    return true;
+  }
+  return false;
+}
+// Returns true if tablet user agent is detected
+function isTV() {
+  cvDeviceByUA = cfDeviceByUA();
+  if (cvDeviceByUA == 'tv') {
+    return true;
+  }
+  return false;
+}
+// Returns true if mobile user agent is detected
+function isMobile() {
+  cvDeviceByUA = cfDeviceByUA();
+  if (cvDeviceByUA == 'mobile') {
+    return true;
+  }
+  return false;
+}
+// Google Analytics DriverInstalled
+if (cvURL.indexOf('driverinstalled') != -1) {
+  // http://www.amd.com/di?vid1=v1111&vid2=v2222&vid3=v3333&vid4=v4444&did1=d1111&did2=d2222&did3=d3333&did4=d4444&ssvid1=ssv1111&ssvid2=ssv2222&ssvid3=ssv3333&ssvid4=ssv4444&ssid1=ss1111&ssid2=ss2222&ssid3=ss3333&ssid4=ss4444&pid1=p1111&pid2=p2222&pid3=p3333&pid4=p4444
+  // https://secure.amd.com/di?vid1=v1RadeonÃƒÂ¢"Ã‚Â¢ HD 1111*&vid2=v2RadeonÃƒÂ¢"Ã‚Â¢ HD 2222*&vid3=v3RadeonÃƒÂ¢"Ã‚Â¢ HD 3333*&vid4=v4RadeonÃƒÂ¢"Ã‚Â¢ HD 4444*&did1=d1111&did2=d2222&did3=d3333&did4=d4444&ssvid1=ssv1111&ssvid2=ssv2222&ssvid3=ssv3333&ssvid4=ssv4444&ssid1=ss1111&ssid2=ss2222&ssid3=ss3333&ssid4=ss4444&pid1=p1111&pid2=p2222&pid3=p3333&pid4=p4444
+  cvDILang = cfDetectLanguage() || '';
+  cvDILangURLwww = 'en-us'; // set default
+  cvDILangURL = 'en'; // set default
+  if (cvDILang) {
+    if (cvDILang.indexOf('en') != -1) {
+      cvDILangURL = 'en';
+      cvDILangURLwww = 'en-us';
+    } else if (cvDILang.indexOf('de') != -1) {
+      cvDILangURL = 'de';
+      cvDILangURLwww = 'de-de';
+    } else if (cvDILang.indexOf('fr') != -1) {
+      cvDILangURL = 'fr';
+      cvDILangURLwww = 'fr-fr';
+    } else if (cvDILang.indexOf('pt') != -1) {
+      cvDILangURL = 'br';
+      cvDILangURLwww = 'pt-br';
+    } else if (cvDILang.indexOf('ru') != -1) {
+      cvDILangURL = 'ru';
+      cvDILangURLwww = 'ru-ru';
+    } else if (cvDILang.indexOf('cn') != -1) {
+      cvDILangURL = 'cn';
+      cvDILangURLwww = 'zh-cn';
+    } else if (cvDILang.indexOf('tw') != -1) {
+      cvDILangURL = 'tw';
+      cvDILangURLwww = 'zh-tw';
+    } else if (cvDILang.indexOf('ko') != -1) {
+      cvDILangURL = 'kr';
+      cvDILangURLwww = 'ko-kr';
+    } else if (cvDILang.indexOf('ja') != -1) {
+      cvDILangURL = 'jp';
+      cvDILangURLwww = 'ja-jp';
+    }
+  }
+  // cvDILangURLwww = (cvDILangURL=="en") ? "en-us" : cvDILangURL;
+  cvDILangURLwww = 'en'; // temp fix for missing languages. remove this line to go back to languages.
+  if (cvURL.indexOf('driverinstalled/index.html') != -1) { // cvDI = Driver Installed
+    sAA.events += ',event55'; // Driver Installed (DI) Event
+    cvEloquaUID = cvDIRirectURL = '';
+    cvDIRegistered = 'no';
+    cvURL = cvURL.toLowerCase();
+    var cvParamsV = [],
+      cvParamsD = [],
+      cvParamsSSV = [],
+      cvParamsSS = [],
+      cvParamsP = [],
+      cvParamPT='',
+      cvParamOS='',
+      cvParamOSBit='',
+      cvParamCPU='';
+    cvDIparams = cfUtility(cvURL, 'parametersonly') || '';
+    cvDIparams = cvDIparams.toLowerCase();
+    cvParamPT = 'pt=' +  (parseUri(cvURL).queryKey['pt'] || '');
+    cvDIparams = cvDIparams.replace(/[^.\sa-zA-Z0-9&?=,_-]/g, '');
+    cvParamsV[0] = 'vid1=' + (parseUri(cvURL).queryKey['vid1'] || '');
+    cvParamsV[1] = 'vid2=' + (parseUri(cvURL).queryKey['vid2'] || '');
+    cvParamsV[2] = 'vid3=' + (parseUri(cvURL).queryKey['vid3'] || '');
+    cvParamsV[3] = 'vid4=' + (parseUri(cvURL).queryKey['vid4'] || '');
+    cvParamsP[0] = 'pid1=' + (parseUri(cvURL).queryKey['pid1'] || '');
+    cvParamsP[1] = 'pid2=' + (parseUri(cvURL).queryKey['pid2'] || '');
+    cvParamsP[2] = 'pid3=' + (parseUri(cvURL).queryKey['pid3'] || '');
+    cvParamsP[3] = 'pid4=' + (parseUri(cvURL).queryKey['pid4'] || '');
+    cvParamsD[0] = 'did1=' + (parseUri(cvURL).queryKey['did1'] || '');
+    cvParamsD[1] = 'did2=' + (parseUri(cvURL).queryKey['did2'] || '');
+    cvParamsD[2] = 'did3=' + (parseUri(cvURL).queryKey['did3'] || '');
+    cvParamsD[3] = 'did4=' + (parseUri(cvURL).queryKey['did4'] || '');
+    cvParamsSSV[0] = 'ssvid1=' + (parseUri(cvURL).queryKey['ssvid1'] || '');
+    cvParamsSSV[1] = 'ssvid2=' + (parseUri(cvURL).queryKey['ssvid2'] || '');
+    cvParamsSSV[2] = 'ssvid3=' + (parseUri(cvURL).queryKey['ssvid3'] || '');
+    cvParamsSSV[3] = 'ssvid4=' + (parseUri(cvURL).queryKey['ssvid4'] || '');
+    cvParamsSS[0] = 'ssid1=' + (parseUri(cvURL).queryKey['ssid1'] || '');
+    cvParamsSS[1] = 'ssid2=' + (parseUri(cvURL).queryKey['ssid2'] || '');
+    cvParamsSS[2] = 'ssid3=' + (parseUri(cvURL).queryKey['ssid3'] || '');
+    cvParamsSS[3] = 'ssid4=' + (parseUri(cvURL).queryKey['ssid4'] || '');
+    cvParamOS = 'os=' + (parseUri(cvURL).queryKey['os'] || '');
+    cvParamOSBit = 'osbit=' + (parseUri(cvURL).queryKey['osbit'] || '');
+    cvParamCPU =  'cpu=' + (parseUri(cvURL).queryKey['cpu'] || '');
+    sAA.eVar17 = cvParamsV.join(',');
+    sAA.eVar18 = cvParamsP.join(',');
+    sAA.eVar19 = cvParamsD.join(',');
+    sAA.eVar21 = cvParamsSSV.join(',');
+    sAA.eVar22 = cvParamsSS.join(',');
+    sAA.eVar17a = cvParamsV.join('|');
+    sAA.eVar18a = cvParamsP.join('|');
+    sAA.eVar19a = cvParamsD.join('|');
+    sAA.eVar21a = cvParamsSSV.join('|');
+    sAA.eVar22a = cvParamsSS.join('|');
+    if (cfCookieEnabled()) {
+      cvDI = cfGetCookie('c_scdi') || ''; // scdi = SiteCatalyst Driver Installed
+      if (cvDI) { // cookie exists
+        cvDISplit = cvDI.split(',');
+        for (var n = 0; n < cvDISplit.length; n++) {
+          var cvElement = cvDISplit[n].substr(0, cvDISplit[n].indexOf('='));
+          var cvElementValue = cvDISplit[n].substr(cvDISplit[n].indexOf('=') + 1) || '';
+          cvElement = cvElement.replace(/^\s+|\s+$/g, '');
+          if (cvElement == 'reg') {
+            cvDIRegistered = cvElementValue;
+          }
+        }
+      }
+    }
+    cvDICookieValue = 'reg=' + cvDIRegistered + ',lang=' + cvDILang + ',' + cvParamPT + ',' + sAA.eVar17 + ',' + sAA.eVar18 + ',' + sAA.eVar19 + ',' + sAA.eVar21 + ',' + sAA.eVar22 + ',' + cvParamOS + ',' + cvParamOSBit + ',' + cvParamCPU;
+    cvDICookieValue = cvDICookieValue.replace(/[^.\sa-zA-Z0-9=,_-]/g, '');
+    if (cvDIparams.indexOf('?') != -1) {
+      cvDIparams += '&lang=' + cvDILang;
+    } else {
+      cvDIparams += '?lang=' + cvDILang;
+    }
+    if (cvDIRegistered == 'yes') {
+      cvDIRedirectURL="https://explore.amd.com/driver-post-install/thank-you";
+      // "http://www.amd.com/"+cvDILangURLwww+"/who-we-are/subscriptions/catalyst-software-installed"; //"/products/technologies/amd-catalyst/Pages/catalyst-software-installed.aspx";
+    } else {
+      if (cvParamPT.indexOf("radeonpro") !== -1) {
+         cvDIRedirectURL="https://explore.amd.com/driver-post-install/prographics-en";
+       } else {
+         cvDIRedirectURL="https://explore.amd.com/driver-post-install/"+cvDILangURL;
+       }
+    }
+    if (!cfCookieEnabled()) {
+      cvDIRedirectURL += cvDIparams;
+    } else {
+      cfSetCookie('c_scdi', cvDICookieValue, 365);
+    }
+    dataLayer.push({
+      PT: cvParamPT || '',
+      VID: sAA.eVar17a || '',
+      PID: sAA.eVar18a || '',
+      DID: sAA.eVar19a || '',
+      SSVID: sAA.eVar21a || '',
+      SSID: sAA.eVar22a || '',
+      OS: cvParamOS || '',
+      OSBIT: cvParamOSBit || '',
+      CPU: cvParamCPU || '',
+      event: 'DriverInstalled',
+      eventCallback: function () {
+        window.location.href = cvDIRedirectURL;
+      }
+    });
+  }
+  if (cvURL.indexOf('driverinstalled/thankyou.html') != -1) { // opt-in thank you (http://subscriptions.amd.com/driverinstalled/thankyou.html)
+    cvEloquaUID = cvDISplit = '';
+    cvDIRegistered = 'yes';
+    cvDIparams = cfUtility(cvURL, 'parametersonly') || '';
+    cvDI = cfGetCookie('c_scdi') || ''; //scdi = SiteCatalyst Driver Installed
+    var cvDIPT = '';
+    if (cvDI) { // cookie exists
+      cvDISplit = cvDI.split(',');
+      for (DILoop = 0; DILoop < cvDISplit.length; DILoop++) {
+        var cvDIElement = cvDISplit[DILoop].substr(0, cvDISplit[DILoop].indexOf("="));
+        var cvDIElementValue = cvDISplit[DILoop].substr(cvDISplit[DILoop].indexOf("=") + 1) || "";
+        cvDIElement = cvDIElement.replace(/^\s+|\s+$/g, "");
+
+        if (cvDIElement == "pt") {
+          cvDIPT = cvDIElementValue;
+        }
+      }
+      cvDISplit.shift(); // drop reg value
+    }
+    cvDICookieValue = 'reg=yes,' + cvDISplit;
+    cfSetCookie('c_scdi', cvDICookieValue, 365);
+    if (cvDIPT.indexOf("radeonpro") !== -1) {
+      cvDIRedirectURL="https://www.amd.com/"+cvDILangURLwww+'/graphics/workstations'+cvDIparams;
+    } else {
+		  cvDIRedirectURL="https://www.amd.com/"+cvDILangURLwww+'/corporate/subscriptions-thank-you'+cvDIparams;
+    }
+    dataLayer.push({
+      PT: cvParamPT || '',
+      VID: sAA.eVar17a || '',
+      PID: sAA.eVar18a || '',
+      DID: sAA.eVar19a || '',
+      SSVID: sAA.eVar21a || '',
+      SSID: sAA.eVar22a || '',
+      OS: cvParamOS || '',
+      OSBIT: cvParamOSBit || '',
+      CPU: cvParamCPU || '',
+      event: 'DriverInstalled',
+      eventCallback: function () {
+        window.location.href = cvDIRedirectURL;
+      }
+    });
+  }
+}
+// Google Analytics Compatibility Checker
+// https://secure.amd.com/acc
+// http://www.amd.com/us/as/cchecker/index.html
+if (cvURL.indexOf('cchecker/') != -1) {
+  if (parseUri(cvURL).queryKey['lang']) {
+    cvCCLang = parseUri(cvURL).queryKey['lang'];
+  } else {
+    cvCCLang = cvLang || '';
+  }
+  cvCCLangURL = 'us'; // set default
+  if (cvURL.indexOf('cchecker/index.html') != -1) { // cvCC = Compatibility Checker
+    cvEloquaUID = cvCCRirectURL = '';
+    cvCCRegistered = 'no';
+    cvURL = cvURL.toLowerCase();
+    cvCCparams = parseUri(cvURL).query || '';
+    cvCCparams = cvCCparams.toLowerCase();
+    cvCCparams = cvCCparams.replace(/[^.\sa-zA-Z0-9&?=,_-]/g, '');
+    cvCCGC = (parseUri(cvURL).queryKey['gesturecontrol'] || 0);
+    cvCCFL = (parseUri(cvURL).queryKey['facelogin'] || 0);
+    cvCCAZ = (parseUri(cvURL).queryKey['appzone'] || 0);
+    cvCCSM = (parseUri(cvURL).queryKey['screenmirror'] || 0);
+    cvCCCPU = (parseUri(cvURL).queryKey['cpu'] || '');
+    cvCCNordic = (parseUri(cvURL).queryKey['nordic'] || 0);
+    if (cfCookieEnabled()) {
+      cvCC = cfGetCookie('c_sccc') || ''; // sccc = SiteCatalyst Compatibility Checker
+      if (cvCC) { // cookie exists
+        cvCCSplit = cvCC.split(',');
+        for (var i = 0; i < cvCCSplit.length; i++) {
+          var cvElement = cvCCSplit[i].substr(0, cvCCSplit[i].indexOf('='));
+          var cvElementValue = cvCCSplit[i].substr(cvCCSplit[i].indexOf('=') + 1) || '';
+          cvElement = cvElement.replace(/^\s+|\s+$/g, ''); // clean leading and trailing spaces
+          if (cvElement == 'reg') {
+            cvCCRegistered = cvElementValue;
+          }
+          if (cvElement == 'gc' && cvElementValue == 1) {
+            cvCCGC = 1;
+          }
+          if (cvElement == 'fl' && cvElementValue == 1) {
+            cvCCFL = 1;
+          }
+          if (cvElement == 'az' && cvElementValue == 1) {
+            cvCCAZ = 1;
+          }
+          if (cvElement == 'sm' && cvElementValue == 1) {
+            cvCCSM = 1;
+          }
+          if (cvElement == 'cpu' && !cvCCCPU && !!cvElementValue) {
+            cvCCCPU = cvElementValue;
+          } // If cookie has value, don't overwrite with blank.
+        }
+      }
+    }
+    cvCCCookieValue = 'reg=' + cvCCRegistered + ',lang=' + cvCCLang + ',cpu=' + cvCCCPU + ',gc=' + cvCCGC + ',fl=' + cvCCFL + ',az=' + cvCCAZ + ',sm=' + cvCCSM;
+    cvCCCookieValue = cvCCCookieValue.replace(/[^.\sa-zA-Z0-9=,_-]/g, '');
+    if (cvCCparams.indexOf('?') != -1) {
+      cvCCparams += '&lang=' + cvCCLang;
+    } else {
+      cvCCparams += '?lang=' + cvCCLang;
+    }
+    if (cvCCRegistered == 'yes') {
+      cvCCRedirectURL="https://explore.amd.com/compatibility-checker-installed/en";
+    } else {
+      cvCCLangURL = cvCCLangURL.toUpperCase();
+      if (cvCCLangURL == 'US') {
+        cvCCLangURL = '';
+      }
+      cvCCRedirectURL="https://explore.amd.com/compatibility-checker-installed/en";
+    }
+    // Nordic cchecker
+    if (cvCCNordic == 1) {
+      cvCCRedirectURL="https://www.amd.com";
+    }
+    if (!cfCookieEnabled()) {
+      cvCCRedirectURL += cvCCparams;
+    } else {
+      cfSetCookie('c_sccc', cvCCCookieValue, 365);
+    }
+    window.location.href = cvCCRedirectURL;
+  }
+  if (cvURL.indexOf('cchecker/thankyou.html') != -1) { // opt-in thank you (http://subscriptions.amd.com/cchecker/thankyou.html)
+    cvEloquaUID = cvCCSplit = '';
+    cvCCRegistered = 'yes';
+    cvCCparams = cfUtility(cvURL, 'parametersonly') || '';
+    cvCCRedirectURL = 'https://www.amd.com/';
+    cvCC = cfGetCookie('c_sccc') || ''; // sccc = SiteCatalyst Compatibility Checker
+    if (cvCC) { // cookie exists
+      cvCCSplit = cvCC.split(',');
+      cvCCSplit.shift(); // drop reg value
+    }
+    cvCCCookieValue = 'reg=yes,' + cvCCSplit;
+    cfSetCookie('c_sccc', cvCCCookieValue, 365);
+    window.location.href = cvCCRedirectURL;
+  }
+}
+
+function cfTimedReading() { // Content Consumption
+  if (cvURL.substring(0, 5) != 'https') {
+    s.account = ReportSuiteID;
+    s.prop12 = s.pageName;
+    s.prop25 = ReportSuiteID;
+    if (cvDNTDomains.indexOf(cfUtility(cvURL, 'server')) == -1) {
+      s.visitorNamespace = 'amd';
+      s.trackingServer = 'metrics.amd.com';
+      s.trackingServerSecure = 'smetrics.amd.com';
+    }
+    s.events = s.linkTrackEvents = 'event33';
+    cvSTL = 1;
+    s.tl(this, 'o', cvURL);
+    clearTimeout(cvTimedReading);
+    s.events = s.linkTrackEvents = '';
+    cvSTL = 0;
+    if (cvSPwebtrack == 1) {
+      (function () {
+        return ewt.track({
+          name: 'CC|' + s.prop12,
+          type: 'content-consumed',
+          link: o
+        });
+      })();
+    }
+  }
+}
+
+function cvSendOption(id, selectedid) {
+  if (cvURL.substring(0, 5) != 'https') {
+    var cvSelectedID = selectedid;
+    var cvSelectID = id;
+    Destination_LID = s.prop13 = s.eVar13 = cvSelectID + '|' + cvSelectedID;
+    Destination_URL_wParam = s.prop14 = s.prop12 = s.eVar6 = cvURL;
+    s.events = s.linkTrackEvents = 'event6';
+    s.prop25 = ReportSuiteID;
+    if (cvDNTDomains.indexOf(cfUtility(cvURL, 'server')) == -1) {
+      s.visitorNamespace = 'amd';
+      s.trackingServer = 'metrics.amd.com';
+      s.trackingServerSecure = 'smetrics.amd.com';
+    }
+    cvSTL = 1;
+    s.tl(this, 'o', cvURL);
+    s.events = s.linkTrackEvents = '';
+    cvSTL = 0;
+  }
+}
+// migrate as variable if needed
+function cfPageName(cvURL, cvParamInPageName, cvParamToInclude) {
+  var cvPageName;
+  if (cvParamInPageName == 1) {
+    if (cvParamToInclude) {
+      var cvParam_Modified = '?';
+      cvParam_Split = cvParamToInclude.toLowerCase().split(',');
+      for (var i = 0; i < cvParam_Split.length; i = i + 1) {
+        if (cfGetQParam(cvURL, cvParam_Split[i])) {
+          cvParam_Modified = cvParam_Modified + cvParam_Split[i] + '=' + cfGetQParam(cvURL, cvParam_Split[i]) + '&';
+        }
+      }
+      cvParam_Modified = cvParam_Modified.substring(0, cvParam_Modified.length - 1);
+      cvPageName = cfUtility(cvURL, 'channel') + cfUtility(cvURL, 'filename') + cvParam_Modified;
+    } else {
+      cvPageName = cfUtility(cvURL, 'channel') + cfUtility(cvURL, 'filenameparameters');
+    }
+  } else {
+    cvPageName = cfUtility(cvURL, 'channel') + cfUtility(cvURL, 'filename');
+  }
+
+  /* ----- IF PageName is Over 100 Chars ----- */
+  if (cvPageName.length > 100) {
+    cvPageName = '/' + cfUtility(cvURL, 'server') + '/...' + cfRight(cvPageName.replace(cfUtility(cvURL, 'server') + '/', ''), 100 - (cfUtility(cvURL, 'server').length + 5));
+  }
+  return cvPageName;
+}
+
+function cfGetSubstringIndex(str, substring, n) {
+  var times = 0,
+    index = null;
+  while (times < n && index !== -1) {
+    index = str.indexOf(substring, index + 1);
+    times++;
+  }
+  return index;
+}
+
+function cfUtility(cvURL, cvAction) {
+  var a, b, c, TheResult, cvParamPos, cvParam;
+  switch (cvAction) {
+    case 'server': // Example: sites.amd.com, www.hp.com
+      a = cvURL.split(/\/+/g)[1];
+      if (typeof (a) !== 'undefined') {
+        b = a.split('.');
+        if (b.length == 2) {
+          c = 'www.' + a;
+        } else {
+          c = a;
+        }
+        TheResult = c;
+      } else {
+        TheResult = '';
+      }
+      break;
+    case 'domain': // Example: amd.com, hp.com
+      a = cfUtility(cvURL, 'server');
+      if (typeof (a) !== 'undefined') {
+        b = a.split('.');
+        b_len = b.length;
+        if (b_len == 4) {
+          TheResult = String(b[b_len - 3] + '.' + b[b_len - 2] + '.' + b[b_len - 1]);
+        } else {
+          TheResult = String(b[b_len - 2] + '.' + b[b_len - 1]);
+        }
+      } else {
+        TheResult = '';
+      }
+      break;
+    case 'coredomain': // Example: amd, hp
+      a = cfUtility(cvURL, 'domain'); // amd.com, hp.com
+      if (typeof (a) !== 'undefined') {
+        b = a.split('.');
+        TheResult = b[0];
+      } else {
+        TheResult = '';
+      }
+      break;
+    case 'channel':
+      a = cvURL.split('?')[0];
+      a = a.replace('http://', '/');
+      a = a.replace('https://', '/');
+      b = a.substring(a.lastIndexOf('/') + 1);
+      a = a.substring(0, a.length - b.length);
+      a = a.replace(cvURL.split(/\/+/g)[1], cfUtility(cvURL, 'server'));
+      TheResult = a;
+      break;
+    case 'filename':
+      a = cvURL.split('?')[0];
+      b = a.substring(a.lastIndexOf('/') + 1);
+      TheResult = b;
+      break;
+    case 'filenameparameters':
+      cvParamPos = cvURL.indexOf('?');
+      if (cvParamPos != -1) {
+        cvParam = cvURL.substring(cvParamPos);
+      } else {
+        cvParam = '';
+      }
+      TheResult = cfUtility(cvURL, 'filename') + cvParam;
+      break;
+    case 'parametersonly':
+      cvParamPos = cvURL.indexOf('?');
+      if (cvParamPos != -1) {
+        cvParam = cvURL.substring(cvParamPos);
+      } else {
+        cvParam = '';
+      }
+      TheResult = cvParam;
+      break;
+    case 'se':
+      var cvReferrer_Server = cvURL.split(/\/+/g)[1]; // www.google.ca, www.yahoo.com
+      var cvReferrer_Server_Splitted = cvReferrer_Server.split('.'); // google.ca, yahoo.ca
+      cvReferrer_Server_Splitted_Length = cvReferrer_Server_Splitted.length;
+      TheResult = String('.' + cvReferrer_Server_Splitted[cvReferrer_Server_Splitted_Length - 2] + '.');
+      break;
+    case 'ext':
+      TheResult = cvURL.substring(cvURL.lastIndexOf('/') + 1, cvURL.length).substring(cvURL.substring(cvURL.lastIndexOf('/') + 1, cvURL.length).lastIndexOf('.') + 1, cvURL.substring(cvURL.lastIndexOf('/') + 1, cvURL.length).length);
+      break;
+    default:
+      TheResult = '';
+  }
+  return TheResult;
+}
+
+// Google Tag Manager (GTM)
+cvGTMID = 'GTM-58DFX4Z'; // AMD GTM v4
+function GTMClickAttach () {
+  var bodyEle = jQuery('body').get(0);
+  if (bodyEle.addEventListener) {
+    bodyEle.addEventListener('click', function (evt) { cfLnkClick(evt); }, true);
+  } else if (bodyEle.attachEvent) {
+    document.attachEvent('onclick', function () {
+      var evt = window.event;
+      cfLnkClick(evt);
+    });
+  }
+}
+
+var cfLnkClick = (function(evt){});
+
+if (window.jQuery) {
+  if (jQuery('body').length) {
+    GTMClickAttach ();
+  } else {
+    var checkExist = setInterval(function() {
+      if (jQuery('body').length) {
+        clearInterval(checkExist);
+        GTMClickAttach ();
+      }
+    }, 100);
+  }
+}
+
+if (cvGTMID) {
+  _load_js('//download.amd.com/js/analytics/gtm.js');
+} // EOF GTM
+
+if ((cvSurveyURLCheck.toLowerCase().indexOf('ccc') == -1) && (cvURLCheck.toLowerCase().indexOf('compatcheck') == -1) && (cvURLCheck.toLowerCase().indexOf('cchecker') == -1)) { // do not edit; exclude from banners (i.e. CCC, ccc-apu, compatcheck, cchecker)
+  // Survey code BOF
+  if (cvSurveyURLCheck.indexOf('/us/') != -1 || /\/en($|#|\?|\/)/.test(cvSurveyURLCheck) || cvSurveyURLCheck.indexOf('en-us') != -1 || cvSurveyURLCheck.indexOf('/de/') != -1 || cvSurveyURLCheck.indexOf('de-de') != -1 || cvSurveyURLCheck.indexOf('/es/') != -1 || cvSurveyURLCheck.indexOf('es-xl') != -1 || cvSurveyURLCheck.indexOf('/fr/') != -1 || cvSurveyURLCheck.indexOf('fr-fr') != -1 || cvSurveyURLCheck.indexOf('/zh-hans/') != -1 || cvSurveyURLCheck.indexOf('zh-cn') != -1) {
+    _load_js('//download.amd.com/js/survey.js');
+  }
+  // ForeSee Survey
+  if (/((www|sites|support|search|server|global|subscriptions|developer|community|shop|products|experience|explore|partner)\.amd\.com.*)/i.test(cvURLCheck)) {
+    _load_js('//download.amd.com/js/foresee/foresee-production-hot-deploy.js'); // foresee-trigger.js  foresee-production-hot-deploy.js foresee-staging-hot-deploy.js
+  }
+} // do not edit; exclude from banners (i.e. CCC, ccc-apu, compatcheck)
+// VECC: www.amd.com/us/vision/shop/cool-apps/ccc/pages/index.aspx; new: support.amd.com/en-us/download/ccc-APU
+// Catalyst Pro CC: /sites.amd.com/us/business/ccc/pages/index.aspx
+// CCC: /support.amd.com/en-us/download/ccc
+// UTILITY FUNCTIONS
+function cfGetByteSize(s) { // CVA - delete
+  return encodeURIComponent('' + s).length;
+}
+
+function cfis_int(value) { // CVA - delete
+  if (!isNaN(value) && (parseFloat(value) == parseInt(value))) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function cfHideshow(elementid) { // VideoFX - delete
+  if (!document.getElementById) {
+    return;
+  }
+  if (elementid.style.display == 'block') {
+    elementid.style.display = 'none';
+  } else {
+    elementid.style.display = 'block';
+  }
+}
+
+function cfClean(cvURL) { // use parseURL instead - delete
+  if (cvURL) {
+    cvURL = cvURL.replace('http://', '/');
+    cvURL = cvURL.replace('https://', '/');
+  }
+  return cvURL;
+}
+
+function cfTrim(stringToTrim) { // not used - delete
+  return stringToTrim.replace(/^\s+|\s+$/g, '');
+}
+
+function parseURL(url) { // delete (replaced with parseUri)
+  // https://www.facebook.com/amd
+  // Object {
+  // domain : "www.facebook.com",
+  // host : "facebook",
+  // path : "amd",
+  // protocol : "https",
+  // subdomain : "www",
+  // tld : "com"
+  // }
+  parsed_url = {};
+  if (url === null || url.length === 0) {
+    return parsed_url;
+  }
+  protocol_i = url.indexOf('://');
+  parsed_url.protocol = url.substr(0, protocol_i);
+  remaining_url = url.substr(protocol_i + 3, url.length);
+  domain_i = remaining_url.indexOf('/');
+  domain_i = domain_i == -1 ? remaining_url.length - 1 : domain_i;
+  parsed_url.domain = remaining_url.substr(0, domain_i);
+  parsed_url.path = domain_i == -1 || domain_i + 1 == remaining_url.length ? null : remaining_url.substr(domain_i + 1, remaining_url.length);
+  domain_parts = parsed_url.domain.split('.');
+  switch (domain_parts.length) {
+    case 2:
+      parsed_url.subdomain = null;
+      parsed_url.host = domain_parts[0];
+      parsed_url.tld = domain_parts[1];
+      break;
+    case 3:
+      parsed_url.subdomain = domain_parts[0];
+      parsed_url.host = domain_parts[1];
+      parsed_url.tld = domain_parts[2];
+      break;
+    case 4:
+      parsed_url.subdomain = domain_parts[0];
+      parsed_url.host = domain_parts[1];
+      parsed_url.tld = domain_parts[2] + '.' + domain_parts[3];
+      break;
+  }
+  parsed_url.parent_domain = parsed_url.host + '.' + parsed_url.tld;
+  return parsed_url;
+}
+// get URL paramter values - delete (replaced with parseUri)
+function cfParamValue(cvURL, name) {
+  name = name.replace(/[\[]/, '\\\[').replace(/[\]]/, '\\\]');
+  var regexS = '[\\?&]' + name + '=([^&#]*)';
+  var regex = new RegExp(regexS);
+  var results = regex.exec(cvURL);
+  if (results === null) {
+    return '';
+  } else {
+    return results[1];
+  }
+}
+
+function cfGetQParam(a, b) { // Custom Function to Get Query Parameters - delete (replaced with parseUri)
+  var c = a.indexOf('?');
+  var d = a.indexOf('#');
+  if (c < 0) {
+    return '';
+  }
+  var e = a.substr(c + 1);
+  if (d > 0) {
+    e = a.substring(c + 1, d);
+  }
+  var f = e.split('&');
+  for (var i = 0; i < f.length; i++) {
+    var g = f[i].split('=');
+    g[0] = unescape(g[0]);
+    if (g[0] == b) {
+      g[1] = unescape(g[1]);
+      if (g[1].indexOf('"') > -1) {
+        var h = /"/g;
+        g[1] = g[1].replace(h, '\\"');
+      }
+      if (g[1].indexOf('+') > -1) {
+        var j = /\+/g;
+        g[1] = g[1].replace(j, ' ');
+      }
+      return g[1];
+    }
+  }
+  return '';
+}
+
+/* Custom Functions for Responsive Web (RW) EOF */
+function cfFindChild(cvNode, cvTag) { // node to search for children, tagname being searched
+  var cvChildren = cvNode.children;
+  for (var i = 0; i < cvChildren.length; i++) {
+    if (cvChildren[i].tagName.toLowerCase() == cvTag.toLowerCase()) {
+      return cvChildren[i];
+    } else {
+      cvFosterChildren = cfFindChild(cvChildren[i], cvTag);
+      if (typeof cvFosterChildren != 'undefined') {
+        return cvFosterChildren;
+      }
+    }
+  }
+}
+//* **********************************************************************
+/* cookie functions BOF */
+function cfCookieEnabled() {
+  try {
+    document.cookie = 'testcookie=1';
+    var cookiesEnabled = document.cookie.indexOf('testcookie=') !== -1;
+    document.cookie = 'testcookie=1; expires=Thu, 01-Jan-1970 00:00:01 GMT';
+    return cookiesEnabled;
+  } catch (e) {
+    return false;
+  }
+}
+
+function cfSetCookie(c_name, value, exdays, samesite, secure) { // negative expiry value denotes seconds not days
+  var exdate;
+  var c_value;
+  var s;
+  if (!samesite) {
+    if (shouldSendSameSiteNone(navigator.userAgent)) {
+      s = ';SameSite=None;Secure';
+    }
+    else {
+      s = '';
+    }
+  }
+  else if (samesite.toLowerCase() === 'lax') {
+    s = ';SameSite=Lax';
+  }
+  else if (samesite.toLowerCase() === 'strict') {
+    s = ';SameSite=Strict';
+  }
+  else if (samesite.toLowerCase() === 'none') {
+    if (shouldSendSameSiteNone(navigator.userAgent)) {
+      s = ';SameSite=None;Secure';
+    }
+    else {
+      s = '';
+    }
+  }
+  else {
+    s = '';
+  }
+  if (!!secure && s.toLowerCase().indexOf('samesite=none') < 0) {
+    s = s + ';Secure';
+  }
+  if (exdays >= 0) {
+    exdate = new Date();
+    exdate.setDate(exdate.getDate() + exdays);
+    c_value = escape(value) + ((exdays === null) ? '' : '; expires=' + exdate.toUTCString());
+  }
+  else if (exdays < 0) {
+    exdate = new Date();
+    exdate.setSeconds(exdate.getSeconds() - exdays);
+    c_value = escape(value) + ((exdays === null) ? '' : '; expires=' + exdate.toUTCString());
+  }
+  document.cookie = c_name + '=' + c_value + ';path=/;domain=' + cfUtility(cvURL, 'domain') + s;
+}
+
+function cfGetCookie(c_name) {
+  var i, x, y, ARRcookies = document.cookie.split(';');
+  for (i = 0; i < ARRcookies.length; i++) {
+    x = ARRcookies[i].substr(0, ARRcookies[i].indexOf('='));
+    y = ARRcookies[i].substr(ARRcookies[i].indexOf('=') + 1);
+    x = x.replace(/^\s+|\s+$/g, '');
+    if (x == c_name) {
+      return unescape(y);
+    }
+  }
+}
+
+function shouldSendSameSiteNone(useragent) {
+  'use strict';
+  return !isSameSiteNoneIncompatible(useragent);
+}
+
+// Classes of browsers known to be incompatible.
+function isSameSiteNoneIncompatible(useragent) {
+  return hasWebKitSameSiteBug(useragent) || dropsUnrecognizedSameSiteCookies(useragent);
+}
+
+function hasWebKitSameSiteBug(useragent) {
+  return isIosVersion(12, useragent) || (isMacosxVersion(10, 14, useragent) && (isSafari(useragent) || isMacEmbeddedBrowser(useragent)));
+}
+
+function dropsUnrecognizedSameSiteCookies(useragent) {
+  if (isUcBrowser(useragent)) {
+    return !isUcBrowserVersionAtLeast(12, 13, 2, useragent);
+  }
+  return isChromiumBased(useragent) && isChromiumVersionAtLeast(51, useragent) && !isChromiumVersionAtLeast(67, useragent);
+}
+
+// Regex parsing of User-Agent string. (See note above!)
+function isIosVersion(major, useragent) {
+  var regex = /\(iP.+; CPU .*OS (\d+)[_\d]*.*\) AppleWebKit\//;
+  // Extract digits from first capturing group.
+  var tempDetails = useragent.match(regex);
+  return (tempDetails && tempDetails[1]) ? tempDetails[1] === major.toString() : false;
+}
+
+function isMacosxVersion(major, minor, useragent) {
+  var regex = /\(Macintosh;.*Mac OS X (\d+)_(\d+)[_\d]*.*\) AppleWebKit\//;
+  // Extract digits from first and second capturing groups.
+  var tempDetails = useragent.match(regex);
+  return (tempDetails && tempDetails[1] && tempDetails[2]) ? (tempDetails[1] === major.toString()) && (tempDetails[2] === minor.toString()) : false;
+}
+
+function isSafari(useragent) {
+  var safari_regex = /Version\/.* Safari\//;
+  return safari_regex.test(useragent) && !isChromiumBased(useragent);
+}
+
+function isMacEmbeddedBrowser(useragent) {
+  var regex = /^Mozilla\/[\.\d]+ \(Macintosh;.*Mac OS X [_\d]+\) AppleWebKit\/[\.\d]+ \(KHTML, like Gecko\)$/;
+  return regex.test(useragent);
+}
+
+function isChromiumBased(useragent) {
+  var regex = /Chrom(e|ium)/;
+  return regex.test(useragent);
+}
+
+function isChromiumVersionAtLeast(major, useragent) {
+  var regex = /Chrom[^ \/]+\/(\d+)[\.\d]* /;
+  // Extract digits from first capturing group.
+  var tempDetails = useragent.match(regex);
+  var version = (tempDetails && tempDetails[1]) ? parseInt(tempDetails[1], 10) : 0;
+  return version >= major;
+}
+
+function isUcBrowser(useragent) {
+  var regex = /UCBrowser\//;
+  return regex.test(useragent);
+}
+
+function isUcBrowserVersionAtLeast(major, minor, build, useragent) {
+  var regex = /UCBrowser\/(\d+)\.(\d+)\.(\d+)[\.\d]* /;
+  // Extract digits from three capturing groups.
+  var tempDetails = useragent.match(regex);
+  var major_version = (tempDetails && tempDetails[1]) ? parseInt(tempDetails[1], 10) : 0;
+  var minor_version = (tempDetails && tempDetails[2]) ? parseInt(tempDetails[2], 10) : 0;
+  var build_version = (tempDetails && tempDetails[3]) ? parseInt(tempDetails[3], 10) : 0;
+  if (major_version !== major) {
+    return major_version > major;
+  }
+  if (minor_version !== minor) {
+    return minor_version > minor;
+  }
+  return build_version >= build;
+}
+
+
+/* cookie functions EOF */
+/* LightBoxWindow BOF */
+function LightBoxWindow(page_url, width, height) {
+  var urlProtocol = parseUri(cvURL).protocol.toLowerCase();
+  var pageProtocol = parseUri(page_url).protocol.toLowerCase();
+  var ieVersion = getIEVersionPre10();
+  if (typeof jQuery != 'undefined' && ((urlProtocol === pageProtocol) || (urlProtocol ==='http' && pageProtocol === 'https')) && !(ieVersion && ieVersion < 7)) {
+    jQuery.colorbox({'iframe':true, 'href': page_url, 'width': width, 'height': height, 'open':true});
+  } else {
+    window.open(page_url, '', 'toolbar=no,toolbar=0,location=no,location=0,status=no,status=0,menubar=no,menubar=0,scrollbars=yes,scrollbars=1,resizable=yes,resizable=1,height=' + height + ',width=' + width);
+  }
+}
+
+function LightBoxWindow2(page_url, width, height, redirect_url) {
+  var urlProtocol = parseUri(cvURL).protocol.toLowerCase();
+  var tempHost = parseUri(cvURL).host;
+  var ieVersion = getIEVersionPre10();
+  var pageProtocol = parseUri(page_url).protocol.toLowerCase();
+  if (typeof jQuery != 'undefined' && ((urlProtocol === pageProtocol) || (urlProtocol ==='http' && pageProtocol === 'https')) && !(ieVersion && ieVersion < 7)) {
+    if (tempHost === 'www.amd.com' || tempHost === 'amd.com') {
+        document.domain = 'amd.com';
+    }
+    jQuery.colorbox({'iframe':true, 'href': page_url, 'width': width, 'height': height, 'open':true, onClosed:function () {window.location = redirect_url;window.location.href = redirect_url;jQuery(location).attr('href', redirect_url);}});
+  } else {
+    var theDiv = document.createElement('div');
+    theDiv.setAttribute('id', 'divBackground');
+    theDiv.setAttribute('style', 'position:absolute; top:0px; left:0px;background-color:black; z-index:100;opacity: 0.8;filter:alpha(opacity=60); -moz-opacity: 0.8; overflow:hidden; display:none');
+    document.body.appendChild(theDiv);
+    LoadModal();
+    thePopUp = window.open(page_url, '', 'toolbar=no,toolbar=0,location=no,location=0,status=no,status=0,menubar=no,menubar=0,scrollbars=yes,scrollbars=1,resizable=yes,resizable=1,height=' + height + ',width=' + width);
+    thePopUp.focus();
+  }
+}
+
+function LoadModal() {
+  var bcgDiv = document.getElementById('divBackground');
+  bcgDiv.style.display = 'block';
+  if (bcgDiv !== null) {
+    if (document.body.clientHeight > document.body.scrollHeight) {
+      bcgDiv.style.height = document.body.clientHeight + 'px';
+    } else {
+      bcgDiv.style.height = document.body.scrollHeight + 'px';
+    }
+    bcgDiv.style.width = '100%';
+  }
+}
+
+/* LightBoxWindow BOF */
+function cfGetQParamwithHash(b, a, c) {
+  // Custom Function to Get Query Parameters with Hash for OSS.
+  var e;
+  if (!c) {
+    c = '&';
+  }
+  if (b && a && (a = '' + a, e = a.indexOf('?'), e >= 0 && (a = c + a.substring(e + 1) + c, e = a.indexOf(c + b + '='), e >= 0 && (a = a.substring(e + c.length + b.length + 1), e = a.indexOf(c), e >= 0 && (a = a.substring(0, e)), a.length > 0)))) {
+    return s.unescape(a);
+  }
+  return '';
+}
+
+function cfLeft(str, n) {
+  if (n <= 0) {
+    return '';
+  } else if (n > String(str).length) {
+    return str;
+  } else {
+    return String(str).substring(0, n);
+  }
+}
+
+function cfRight(str, n) {
+  if (n <= 0) {
+    return '';
+  } else if (n > String(str).length) {
+    return str;
+  } else {
+    var iLen = String(str).length;
+    return String(str).substring(iLen, iLen - n);
+  }
+}
+
+function cfIsNullOrWhitespace(value) { // Returns true if string value is empty or whitespace characters only.
+  var re = /^\s+$/; // Regular Expression for matching whitespace characters
+  return (((typeof value === 'undefined') || (value === null) || (value.length === 0)) || re.test(value)); // Is value empty or whitespace?
+}
+
+function cfPause(d) {
+  for (var e = new Date(), t = e.getTime() + d; e.getTime() < t;) {
+    e = new Date();
+  }
+}
+
+function removeHTMLTags(strInputCode) {
+  if (strInputCode) {
+    strInputCode = strInputCode.replace(/&(lt|gt);/g, function (strMatch, p1) {
+      return (p1 == 'lt') ? '<' : '>';
+    });
+    var strTagStrippedText = strInputCode.replace(/<\/?[^>]+(>|$)/g, '');
+    return strTagStrippedText;
+  }
+}
+
+/* Responsive Web (RW) */
+// Rendered Experiences (with specific break points)
+function cfRWLayout() {
+  cvRWLayout = 'unknown';
+  cvDocWidth = document.documentElement.clientWidth;
+  if (cvDocWidth < 640) {
+    cvRWLayout = 'small';
+  } else if (cvDocWidth >= 640 && cvDocWidth <= 1000) {
+    cvRWLayout = 'medium';
+  } else if (cvDocWidth > 1000) {
+    cvRWLayout = 'large';
+  }
+  return cvRWLayout;
+}
+
+/* RW: Screen Size - eVar43 */
+// Screen Size
+function cfWinSize() {
+  cvWinSize = document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight;
+  return cvWinSize;
+}
+
+function cfDetectLanguage() {
+  cvSysLanguage = window.navigator.userLanguage || window.navigator.language || '';
+  cvSysLanguage = cvSysLanguage.toLowerCase();
+  return cvSysLanguage;
+}
+
+function getCurrentTimeUTC() {
+  var tmLoc = new Date();
+  return tmLoc.getTime();
+}
+
+function cfSPwebtrack(theName, theType, theLinkObject) {
+  if (cvOldLinkClickObject != theLinkObject) {
+    cvOldLinkClickObject = theLinkObject;
+    return ewt.track({
+      name: 'GA' + theName,
+      type: theType,
+      link: theLinkObject
+    });
+  }
+}
+// on-site search (OSS) BOF
+function getFacets() {
+  'use strict';
+  var category;
+  var setFacets = '';
+  var filters = '';
+  var lp = 0;
+  var temp;
+  var facetBlocks = jQuery('.block-facets');
+  var facetBlockCount = facetBlocks.length;
+  if (facetBlockCount > 0) {
+    lp = 0;
+    for (; lp < facetBlockCount; lp++) {
+      temp = jQuery(facetBlocks[lp]);
+      category = temp.data('block-plugin-id').replace('facet_block:', '');
+      filters = filters ? filters + '|' : filters;
+      if (temp.hasClass('block-facet--checkbox')) {
+        setFacets = getFacetDetails('checkbox', temp);
+      }
+      else if (temp.hasClass('block-facet--links')) {
+        setFacets = getFacetDetails('link', temp);
+      }
+      else if (temp.hasClass('block-facet--range-slider')) {
+        setFacets = getFacetDetails('slider', temp);
+      }
+      else if (temp.hasClass('block-facet--dropdown')) {
+        setFacets = getFacetDetails('drop', temp);
+      }
+      filters += category + '~' + (setFacets ? setFacets : '(not set)');
+    }
+    return filters;
+  }
+}
+
+function getFacetDetails(facetType, facetBlock) {
+  'use strict';
+  var facetWrapper;
+  if (facetType === 'checkbox' || facetType === 'link') {
+    facetWrapper = '.facet-item';
+  }
+  else if (facetType === 'slider') {
+    facetWrapper = '.facet-slider';
+  }
+  else if (facetType === 'drop') {
+    facetWrapper = '.facets-dropdown';
+  }
+  else {
+    throw 'Invalid facet type specified.';
+  }
+  var facets = facetBlock.find(facetWrapper);
+  var facetTotal = facets.length;
+  var setFacets = '';
+  if (facetTotal > 0) {
+    var lp2 = 0;
+    for (; lp2 < facetTotal; lp2++) {
+      var facet = jQuery(facets[lp2]);
+      var facetItem;
+      if (facetType === 'checkbox' || facetType === 'link' || facetType === 'drop') {
+        if (facetType === 'checkbox') {
+          facetItem = facet.children('input');
+        }
+        else if (facetType === 'link') {
+          facetItem = facet.children('a');
+        }
+        else {
+          facetItem = facet.children('option:selected');
+        }
+        var facetTest = false;
+        if (facetType === 'checkbox') {
+          facetTest = facetItem.is(':checked');
+          facetItem = facet.children('label');
+        }
+        else if (facetType === 'link') {
+          facetTest = facetItem.hasClass('is-active');
+        }
+        else {
+          facetTest = facetItem.text().trim();
+        }
+        if (facetTest) {
+          setFacets = setFacets ? setFacets + ',' : setFacets;
+          if (facetType === 'drop') {
+            setFacets = setFacets + facetTest;
+          }
+          else {
+            setFacets = setFacets + facetItem.find('.facet-item__value')[0].innerHTML;
+            var ic = facetItem.find('.facet-item__count');
+            if ( ic.length > 0) {
+              setFacets = setFacets + ' ' + facetItem.find('.facet-item__count')[0].innerHTML;
+            }
+          }
+        }
+      }
+      else {
+        facetItem = facet.children('span[class*="ui-slider-handle"]');
+        var sliderPips = facetItem.length;
+        if (sliderPips > 0) {
+          var lp3 = 0;
+          setFacets = setFacets ? setFacets + ',' : setFacets;
+          for (; lp3 < sliderPips; lp3++) {
+            setFacets = lp3 >= 1 ? setFacets + '/' : setFacets;
+            setFacets = setFacets + jQuery(facetItem[lp3]).children('.ui-slider-tip')[0].innerHTML;
+          }
+        }
+      }
+    }
+  }
+  return setFacets;
+}
+
+function trackSearch(keyword) {
+  var local = (keyword && keyword !== '(not set)') ? keyword : '';
+  var local2 = parseUri(cvURL).queryKey['keyword'] || '';
+  var csKeyword;
+  if (local && local2) {
+    csKeyword = local;
+  }
+  else if (local) {
+    csKeyword = local;
+  }
+  else if (local2) {
+    csKeyword = local2;
+  }
+  else {
+    csKeyword = '(not set)';
+  }
+  var cvOSSEvents = '';
+  if (typeof csKeyword === 'undefined') {
+    csKeyword = '(not set)';
+  }
+  var propertyID = parseUri(cvURL).host; // Search Property ID
+  var keywordLower = csKeyword.toLowerCase(); // Internal Search Terms
+  var pageReferrer;
+  if (typeof sAA.referrer != 'undefined') {
+    pageReferrer = sAA.referrer;
+  }
+  var searchResults = jQuery('span#search-data');
+  var csTotalCounts = searchResults.data('total'); // Total Counts
+
+  cvOSSEvents += ',event5'; // On-Site Search (Counter)
+  var failedKeyword = '';
+  if (csTotalCounts === 0) {
+    failedKeyword = csKeyword.toLowerCase(); // Internal Search Failed Terms
+    cvOSSEvents += ',event12'; // On-Site Search (Failed)
+  }
+  else {
+    cvOSSEvents += ',event11'; // On-Site Search (Success)
+  }
+
+  var currentPage = searchResults.data('current-page'); // Results Page Number
+  var searchFacets = getFacets();
+  // data layer event name is the GTM trigger event name
+  if (cfCheckRSID.ReportSuiteID.indexOf('amdvoss') > -1) {
+    window.dataLayer.push({
+      'event': 'search',
+      'OSS-keyword': keywordLower || '',
+      'OSS-propertyID': propertyID || '',
+      'OSS-referrer': pageReferrer || '',
+      'OSS-totalCount': csTotalCounts || '0',
+      'OSS-events': cvOSSEvents || '',
+      'OSS-failedKeyword': failedKeyword || '',
+      'OSS-pageNumber': currentPage || '',
+      'OSS-facets': searchFacets || ''
+    });
+  }
+  else if (cfCheckRSID.ReportSuiteID.indexOf('amdvshop') > -1) {
+    window.dataLayer.push({
+      'event': 'shopsearch',
+      'SS-keyword': keywordLower || '',
+      'SS-propertyID': propertyID || '',
+      'SS-referrer': pageReferrer || '',
+      'SS-totalCount': csTotalCounts || '0',
+      'SS-events': cvOSSEvents || '',
+      'SS-failedKeyword': failedKeyword || '',
+      'SS-pageNumber': currentPage || '',
+      'SS-facets': searchFacets || ''
+    });
+  }
+}
+
+function isSearchPage() {
+  'use strict';
+  var test = (jQuery('span#search-data').length > 0);
+  return test;
+}
+
+jQuery(window).ready(function () {
+  if (isSearchPage()) {
+    trackSearch();
+  }
+});
+
+// on-site search (OSS) EOF

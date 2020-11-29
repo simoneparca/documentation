@@ -1,0 +1,82 @@
+/*
+ * Survey deployment and Device Type detection Script
+ * Last Update 11:34 EST 07/13/2017
+ */
+
+//survey - BOF
+function isCookieEnabled() {
+  var cookieEnabled = (navigator.cookieEnabled) ? true : false;
+
+  if (typeof navigator.cookieEnabled == "undefined" && !cookieEnabled) {
+    document.cookie = "testcookie";
+    cookieEnabled = (document.cookie.indexOf("testcookie") != -1) ? true : false;
+  }
+  return (cookieEnabled);
+}
+
+function getCookieValueString(name) {
+  var dc = document.cookie;
+  var prefix = name + "=";
+  var begin = dc.indexOf("; " + prefix);
+  if (begin == -1) {
+    begin = dc.indexOf(prefix);
+    if (begin != 0) return null;
+  } else
+    begin += 2;
+  var end = document.cookie.indexOf(";", begin);
+  if (end == -1)
+    end = dc.length;
+  return unescape(dc.substring(begin + prefix.length, end));
+}
+
+function setCookie(name, value) {
+  var cookieDate = new Date();
+  var expire_date = 90;
+  cookieDate.setTime(cookieDate.getTime() + (1000 * 60 * 60 * 24 * expire_date));
+  cookie_set = name + "=" + escape(value);
+  cookie_set += "; expires=" + cookieDate.toGMTString();
+  cookie_set += "; path=/;";
+  cookie_set += " domain=amd.com;";
+  document.cookie = cookie_set;
+}
+
+function FunctionLoad(percent_chance, survey_url, survey_onexit) {
+  random_number = Math.floor((Math.random() * 100) + 1);
+  if (isCookieEnabled()) {
+    var sPageVisited;
+    sPageVisited = "";
+    sPageVisited = getCookieValueString("sPageVisited2");
+
+    if (sPageVisited == null && (random_number < percent_chance)) {
+      setCookie("sPageVisited2", "true");
+      // setCookie("sPageVisited2"+random_number, "true");
+
+      if (survey_onexit) {
+        jQuery(window).unload(function() {
+          window.open(survey_url, "", "toolbar=no,toolbar=0,location=no,location=0,status=no,status=0,menubar=no,menubar=0,scrollbars=yes,scrollbars=1,resizable=yes,resizable=1,height=600,width=800");
+        });
+      } else {
+        if ((!isMobile()) && (typeof jQuery != "undefined"))
+        // {
+        // window.open ( survey_url, "", "toolbar=no,toolbar=0,location=no,location=0,status=no,status=0,menubar=no,menubar=0,scrollbars=yes,scrollbars=1,resizable=yes,resizable=1,height=600,width=800" );
+        // }
+        {
+          var lightboxHTML = "<div id='overlay'></div><div id='lightbox' style='top: 20px; width: 800px; padding: 1px; position: absolute; top:25px;left:25px;'><a href='#' id='popClose' style='width:34px;height:34px;display:block;position:absolute;top:-15px;right:-15px;text-indent:-1000em;background-image: url(" + '"https://www.amd.com/Style%20Library/Images/close_icon.png");' + "'>Close</a></div>";
+          jQuery(lightboxHTML).appendTo('body');
+          jQuery('#lightbox').append("<iframe height='600px' width='800px' id='surveyframe' src='" + survey_url + "'></iframe>");
+          jQuery('#overlay').css('opacity', '0.8');
+          jQuery("#popClose, #overlay").click(function() {
+            jQuery('#lightbox, #overlay').remove();
+          });
+          jQuery(document).keyup(function(e) {
+            if (e.keyCode === 27)
+              jQuery('#lightbox, #overlay').remove();
+          });
+        } else {
+          window.open(survey_url, "", "toolbar=no,toolbar=0,location=no,location=0,status=no,status=0,menubar=no,menubar=0,scrollbars=yes,scrollbars=1,resizable=yes,resizable=1,height=600,width=800");
+        }
+      }
+    }
+  }
+}
+//survey EOF
