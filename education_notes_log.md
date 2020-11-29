@@ -98,32 +98,31 @@ Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più c
 
 # 2020-11-29
 
-- [Create a project in Azure DevOps](/azure-devops-docs/create-project.md)
-- [Markdown syntax for files, widgets, and wikis](/azure-devops-docs/markdown-guidance.md)
-- [Create a readme for your Git repo](/azure-devops-docs/create-a-readme.md)
-- [Share your project vision & view project activity](azure-devops-docs/project-vision-status.md)
-- [Clone and update wiki content offline](/azure-devops-docs/iki-update-offline.md)
+- [Create a project in Azure DevOps](./azure-devops-docs/create-project.md)
+- [Markdown syntax for files, widgets, and wikis](./azure-devops-docs/markdown-guidance.md)
+- [Create a readme for your Git repo](./azure-devops-docs/create-a-readme.md)
+- [Share your project vision & view project activity](./azure-devops-docs/project-vision-status.md)
+- [Clone and update wiki content offline](./azure-devops-docs/iki-update-offline.md)
 - [Differences between provisioned and published wiki](./azure-devops-docs/provisioned-vs-published-wiki.md)
+- Understanding and using Hyper-V hypervisor scheduler types - The root scheduler(./microsoft-docs/manage-hyper-v-scheduler-types.md#virtual-machine-cpu-resource-controls-and-the-root-scheduler)
+- The Java NIO.2 File System in JDK 7
+  - https://www.oracle.com/technical-resources/articles/javase/nio.html
+  - https://docs.oracle.com/javase/tutorial/essential/io/legacy.html
+- 
 
 ## WIP
 
 - https://docs.microsoft.com/en-us/azure/devops/artifacts/overview
-- https://about.gitlab.com/install/
+
+  - https://docs.oracle.com/javase/tutorial/essential/io/walk.html
+  - https://docs.oracle.com/javase/tutorial/essential/io/find.html
+- 
+- [Corso full-stack Udemy][studyeasy]
+- https://spring.io/
 
 ## TODO: Altre cose da vedere
 
-war ear aar
-
-https://stackshare.io/
-pubblicare quando avrò progetto gradle:
-- https://community.ptc.com/t5/Windchill/Windchill-tips-building-your-project-with-Maven/td-p/292254
-- https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
-- http://www.gwtproject.org/
-- https://www.sonarqube.org/downloads/
-
-- [Atom è un editor di testo e IDE open source e sviluppato da GitHub, basato su Chromium ed è scritto in CoffeeScript, il che gli permette di essere eseguito su qualsiasi piattaforma supportata da Chromium. Una delle sue caratteristiche principali è la possibilità di sviluppare pacchetti utilizzando Node.js. Atom possiede inoltre supporto al sistema di controllo di versione Git.](https://atom.io/docs)
-- Electron (precedentemente noto come Atom Shell) è un framework open source gestito e ospitato da GitHub. Electron consente lo sviluppo della GUI di applicazioni desktop utilizzando tecnologie Web: combina il motore di rendering Chromium e il runtime Node.js. Electron è il principale framework per la GUI dietro alcuni importanti progetti open source tra cui Atom, GitHub Desktop, Light Table, Visual Studio Code, WordPress Desktop
-
+- 2 [open source end-to-end software development platform](GitLab.org)
 - https://developer.mozilla.org/it/docs/Learn/Front-end_web_developer
   - 1 HTML, HTML5
   - 1 CSS (SASS/LESS come plus)
@@ -143,7 +142,6 @@ pubblicare quando avrò progetto gradle:
 - 1 VueJS
 - 1 ReactJS
 - 1 Rest
-- 2 [open source end-to-end software development platform](GitLab.org)
 - 1 Python
 - 1 Database relazionali
 - 1 Database No Sql
@@ -157,3 +155,14 @@ pubblicare quando avrò progetto gradle:
 - [C and C++ software development toolkit for SOAP/XML](https://en.wikipedia.org/wiki/GSOAP)
 - [Free installer for Windows programs](https://jrsoftware.org/isinfo.php)
 
+war ear aar
+
+https://stackshare.io/
+pubblicare quando avrò progetto gradle:
+- https://community.ptc.com/t5/Windchill/Windchill-tips-building-your-project-with-Maven/td-p/292254
+- https://community.ptc.com/t5/Windchill/Windchill-Java-development-using-Apache-Maven/td-p/314530
+- http://www.gwtproject.org/learnmore-sdk.html
+- https://www.sonarqube.org/downloads/
+
+- [Atom è un editor di testo e IDE open source e sviluppato da GitHub, basato su Chromium ed è scritto in CoffeeScript, il che gli permette di essere eseguito su qualsiasi piattaforma supportata da Chromium. Una delle sue caratteristiche principali è la possibilità di sviluppare pacchetti utilizzando Node.js. Atom possiede inoltre supporto al sistema di controllo di versione Git.](https://atom.io/docs)
+- Electron (precedentemente noto come Atom Shell) è un framework open source gestito e ospitato da GitHub. Electron consente lo sviluppo della GUI di applicazioni desktop utilizzando tecnologie Web: combina il motore di rendering Chromium e il runtime Node.js. Electron è il principale framework per la GUI dietro alcuni importanti progetti open source tra cui Atom, GitHub Desktop, Light Table, Visual Studio Code, WordPress Desktop
