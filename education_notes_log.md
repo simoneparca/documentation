@@ -100,11 +100,14 @@ Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più c
 
 - [Create a project in Azure DevOps](azure-devops-docs/create-project.md)
 - [Markdown syntax for files, widgets, and wikis](azure-devops-docs/markdown-guidance.md)
-- https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops
-  
+- [Create a readme for your Git repo](azure-devops-docs/create-a-readme.md)
+- [Share your project vision & view project activity](azure-devops-docs/project-vision-status.md)
+- [Clone and update wiki content offline](azure-devops-docs/iki-update-offline.md)
+- [Differences between provisioned and published wiki](azure-devops-docs/provisioned-vs-published-wiki.md)
+
 ## WIP
 
-- https://docs.microsoft.com/en-us/azure/devops/artifacts/overview?view=azure-devops
+- https://docs.microsoft.com/en-us/azure/devops/artifacts/overview
 
 ## TODO: Altre cose da vedere
 
