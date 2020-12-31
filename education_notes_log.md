@@ -108,7 +108,23 @@ Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più c
 - The Java NIO.2 File System in JDK 7
   - https://www.oracle.com/technical-resources/articles/javase/nio.html
   - https://docs.oracle.com/javase/tutorial/essential/io/legacy.html
-- 
+  - https://docs.oracle.com/javase/tutorial/essential/io/walk.html
+  - https://docs.oracle.com/javase/tutorial/essential/io/find.html
+  - https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+
+ 2020-12-08
+
+- https://kubernetes.io/docs/tutorials/kubernetes-basics/
+- https://kubernetes.io/docs/tutorials/kubernetes-basics/create-cluster/cluster-intro/
+
+- https://stackoverflow.com/questions/24511052/how-to-convert-an-iterator-to-a-stream
+- https://www.oracle.com/technical-resources/articles/java/ma14-java-se-8-streams.html
+
+- https://docs.microsoft.com/it-it/troubleshoot/windows-server/networking/best-practices-for-dns-client-settings
+
+- Java library to use ANSI escape sequences to format console output, works on windows(https://fusesource.github.io/jansi/)
+  - https://github.com/fusesource/jansi
+  - https://stackoverflow.com/questions/52767585/how-can-you-use-vt100-escape-codes-in-java-on-windows
 
 ## WIP
 
@@ -149,6 +165,7 @@ Per il momento ho scelto di continuare ad usare Eclipse perchè gratuita, più c
 - 1 Paradigmi OOP
 - 2 TDD-BDD-test automatici
 - 1 jQuery
+- Ajax
 - Preprocessori, task runner o module bundler (Grunt, Gulp, Webpack)
 - Responsive development
 - https://www.codecademy.com/
